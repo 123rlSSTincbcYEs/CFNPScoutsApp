@@ -39,7 +39,7 @@ fun DashboardTApp(navController: NavController) {
         Row(
 
         ) {
-
+            ItemUI("Item 1", "Description 1")
         }
     }
 }

@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.tv.material3.OutlinedButtonDefaults
 import com.example.app.ui.theme.AppTheme
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             RootApp()
         }
@@ -161,7 +163,7 @@ fun LoginApp(navController: NavController) {
 
         FilledTonalButton(
             onClick = {
-                if (isValidEmail) {
+                if (isValidEmail and password.isNotEmpty()) {
                     isLoading = true
                     auth.signInWithEmailAndPassword(username, password)
                         .addOnCompleteListener { task ->
@@ -178,6 +180,8 @@ fun LoginApp(navController: NavController) {
                                 ).show()
                             }
                         }
+                } else {
+                    Toast.makeText(context, "Invalid Email or No Password Entered", Toast.LENGTH_SHORT).show()
                 }
             },
             enabled = !isLoading,
