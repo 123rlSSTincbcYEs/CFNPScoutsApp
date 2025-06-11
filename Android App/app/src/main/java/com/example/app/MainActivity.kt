@@ -50,33 +50,42 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.tv.material3.OutlinedButtonDefaults
 import com.example.app.ui.theme.AppTheme
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import androidx.navigation.compose.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            App()
+            RootApp()
         }
     }
 }
 
 private lateinit var auth: FirebaseAuth
 
-@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun App() {
-    auth = Firebase.auth
+fun RootApp() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "login") {
+        composable("dashboard") {
+            DashboardTApp(navController)
+        }
+        composable("login") {
+            LoginApp(navController)
+        }
+    }
+}
 
-    val colourButton = Color(0xFF2E8B57)
-    val colourBackground = Color(0xFFF3F1ED)
-    val colourSecondary = Color(0xFFD2B48C)
-    val colourSecondaryText = Color(0xFF5D5D5D)
+@Composable
+fun LoginApp(navController: NavController) {
+    auth = Firebase.auth
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -160,6 +169,7 @@ fun App() {
                             if (task.isSuccessful) {
                                 Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
                                     .show()
+                                navController.navigate("dashboard")
                             } else {
                                 Toast.makeText(
                                     context,
