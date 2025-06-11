@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonDefaults.filledTonalButtonColors
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,14 +42,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.OutlinedButtonDefaults
 import com.example.app.ui.theme.AppTheme
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,9 +66,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private lateinit var auth: FirebaseAuth
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun App() {
+    auth = Firebase.auth
+
     val colourButton = Color(0xFF2E8B57)
     val colourBackground = Color(0xFFF3F1ED)
     val colourSecondary = Color(0xFFD2B48C)
@@ -67,8 +80,10 @@ fun App() {
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(username).matches()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -78,13 +93,13 @@ fun App() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Login", fontSize = 32.sp)
+        Text("Login", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Email") }, // Let Compose handle font size animations
+            label = { Text("Email") },
             singleLine = true,
             isError = username.isNotEmpty() && !isValidEmail,
             supportingText = {
@@ -95,6 +110,7 @@ fun App() {
             modifier = Modifier
                 .padding(8.dp),
             textStyle = TextStyle(fontSize = 18.sp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = colourSecondary,
                 unfocusedContainerColor = colourSecondary,
@@ -113,11 +129,12 @@ fun App() {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password", fontSize = 24.sp) },
+            label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier
                     .padding(8.dp),
+            textStyle = TextStyle(fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = colourSecondary,
                 unfocusedContainerColor = colourSecondary,
@@ -135,17 +152,40 @@ fun App() {
 
         FilledTonalButton(
             onClick = {
-                // Firebase login here
+                if (isValidEmail) {
+                    isLoading = true
+                    auth.signInWithEmailAndPassword(username, password)
+                        .addOnCompleteListener { task ->
+                            isLoading = false
+                            if (task.isSuccessful) {
+                                Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
+                                    .show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    task.exception?.message ?: "Authentication failed.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                }
             },
+            enabled = !isLoading,
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = colourButton,
                 contentColor = colourBackground
             ),
             modifier = Modifier
                 .padding(14.dp)
-                .clip(RoundedCornerShape(2.dp)),
+                .clip(RoundedCornerShape(2.dp))
+                .fillMaxWidth()
+                .height(56.dp),
         ) {
-            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(color = colourBackground, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
