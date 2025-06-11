@@ -14,12 +14,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusModifier
@@ -70,7 +86,47 @@ fun ItemUI(name: String, description: String) {
                     Text("Description")
                 }
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 8.dp),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        var expanded by remember { mutableStateOf(false) }
+                        IconButton(onClick = { expanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        }
+
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Mark As Returned") },
+                                leadingIcon = { Icon(Icons.Default.Check, contentDescription = "Mark As Returned") },
+                                onClick = {expanded = false}
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Report Missing") },
+                                leadingIcon = { Icon(Icons.Default.Warning, contentDescription = "Report Missing") },
+                                onClick = {expanded = false}
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Edit") },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Edit") },
+                                onClick = {expanded = false}
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("View Details") },
+                                leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = "View Details") },
+                                onClick = {expanded = false}
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(30.dp))
                     Text(
                         "Due in (<=5) Days",
                         color = Color.Red,
@@ -78,24 +134,22 @@ fun ItemUI(name: String, description: String) {
                         fontSize = 12.sp,
                         modifier = Modifier.padding(start = 8.dp)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row() {
-                        Button(
-                            onClick = {},
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Mark As Returned", color = Color.White, fontSize = 12.sp)
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = {},
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Report Missing", color = Color.White, fontSize = 12.sp)
-                        }
-                    }
+//                        Button(
+//                            onClick = {},
+//                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)),
+//                            shape = RoundedCornerShape(8.dp)
+//                        ) {
+//                            Text("Mark As Returned", color = Color.White, fontSize = 12.sp)
+//                        }
+//                        Spacer(modifier = Modifier.height(8.dp))
+//                        Button(
+//                            onClick = {},
+//                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+//                            shape = RoundedCornerShape(8.dp)
+//                        ) {
+//                            Text("Report Missing", color = Color.White, fontSize = 12.sp)
+//                        }
+
                 }
             }
         }
