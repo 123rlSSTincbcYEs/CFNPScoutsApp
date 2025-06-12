@@ -1,5 +1,7 @@
 package com.example.app
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -39,6 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 val colourButton = Color(0xFF2E8B57)
 val colourBackground = Color(0xFFF3F1ED)
@@ -63,12 +68,20 @@ fun getItemsFromFirestore(
 }
 
 @Composable
-fun ItemUI(name: String, description: String, quantity: Int?) {
+fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?) {
+    var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
+    colourScheme = if (dd == null) {
+        Color(0xFF306bb1)
+    } else if (dd <= 5) {
+        Color(0xFFe03024)
+    } else {
+        Color(0xFF2e8b57)
+    }
     Card(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
-            .border(4.dp, Color.Red, RoundedCornerShape(12.dp)),
+            .border(3.dp, colourScheme, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -142,13 +155,15 @@ fun ItemUI(name: String, description: String, quantity: Int?) {
                         }
                     }
                     Spacer(modifier = Modifier.height(30.dp))
-                    Text(
-                        "Due in (<=5) Days",
-                        color = Color.Red,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                    if (colourScheme != Color(0xFF306bb1)) {
+                        Text(
+                            "Due in $dd Days",
+                            color = Color.Red,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
 //                        Button(
 //                            onClick = {},
 //                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)),
@@ -169,4 +184,15 @@ fun ItemUI(name: String, description: String, quantity: Int?) {
             }
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun daysUntil(targetDate: java.util.Date): Long {
+    val localTargetDate = targetDate.toInstant()
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+
+    val today = LocalDate.now()
+
+    return ChronoUnit.DAYS.between(today, localTargetDate)
 }

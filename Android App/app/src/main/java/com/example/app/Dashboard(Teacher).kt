@@ -1,5 +1,7 @@
 package com.example.app
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DashboardTApp(navController: NavController) {
     Column(
@@ -64,7 +67,15 @@ fun DashboardTApp(navController: NavController) {
                         val description = item["Description"] as? String
                         val quantity = (item["Quantity"] as? Long)?.toInt()
 
-                        ItemUI(name = name.orEmpty(), description = description.orEmpty(), quantity = quantity)
+                        val dueDate = item["Due Date"] as? com.google.firebase.Timestamp
+                        val days = dueDate?.toDate()?.let { daysUntil(it) }
+
+                        ItemUI(
+                            name = name.orEmpty(),
+                            description = description.orEmpty(),
+                            quantity = quantity,
+                            dd = days
+                        )
                     }
                 }
             }
