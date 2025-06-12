@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -146,6 +147,33 @@ fun LoginApp(navController: NavController) {
             modifier = Modifier
                     .padding(8.dp),
             textStyle = TextStyle(fontSize = 18.sp),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (isValidEmail and password.isNotEmpty()) {
+                        isLoading = true
+                        auth.signInWithEmailAndPassword(username, password)
+                            .addOnCompleteListener { task ->
+                                isLoading = false
+                                if (task.isSuccessful) {
+                                    Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
+                                        .show()
+                                    navController.navigate("dashboard")
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        task.exception?.message ?: "Authentication failed.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                    } else {
+                        Toast.makeText(context, "Invalid Email or No Password Entered", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = colourSecondary,
                 unfocusedContainerColor = colourSecondary,

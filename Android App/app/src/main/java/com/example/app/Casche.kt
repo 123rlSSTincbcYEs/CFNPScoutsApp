@@ -68,12 +68,15 @@ fun ItemUI(name: String, description: String, quantity: Int?) {
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
-            .border(2.dp, Color.Red, RoundedCornerShape(12.dp))
-            .background(Color.White),
+            .border(4.dp, Color.Red, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+        ) {
             Row(
                 verticalAlignment = Alignment.Top,
                 modifier = Modifier.fillMaxWidth()
@@ -104,8 +107,8 @@ fun ItemUI(name: String, description: String, quantity: Int?) {
                 ) {
                     Box(
                         modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 8.dp),
+                            .fillMaxWidth()
+                            .padding(end = 8.dp),
                         contentAlignment = Alignment.TopEnd
                     ) {
                         var expanded by remember { mutableStateOf(false) }
