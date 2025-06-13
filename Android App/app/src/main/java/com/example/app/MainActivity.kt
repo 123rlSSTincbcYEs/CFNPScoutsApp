@@ -91,6 +91,8 @@ fun LoginApp(navController: NavController) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var authFailed by remember { mutableStateOf(false)}
+    var message by remember { mutableStateOf<String?>(null) }
 
     val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(username).matches()
     val context = LocalContext.current
@@ -103,6 +105,9 @@ fun LoginApp(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        LoadingOverlay(isLoading = isLoading)
+        ErrorPopup(message = message ?: "Authentication failed.", authStat = authFailed, onDismiss = { authFailed = false })
+
         Text("Login", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -156,7 +161,6 @@ fun LoginApp(navController: NavController) {
                         isLoading = true
                         auth.signInWithEmailAndPassword(username, password)
                             .addOnCompleteListener { task ->
-                                isLoading = false
                                 if (task.isSuccessful) {
                                     Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
                                         .show()
@@ -167,7 +171,12 @@ fun LoginApp(navController: NavController) {
                                         task.exception?.message ?: "Authentication failed.",
                                         Toast.LENGTH_SHORT
                                     ).show()
+                                    authFailed = true
+                                    message = task.exception?.message
                                 }
+                                isLoading = false
+                                username = ""
+                                password = ""
                             }
                     } else {
                         Toast.makeText(context, "Invalid Email or No Password Entered", Toast.LENGTH_SHORT).show()
@@ -195,7 +204,6 @@ fun LoginApp(navController: NavController) {
                     isLoading = true
                     auth.signInWithEmailAndPassword(username, password)
                         .addOnCompleteListener { task ->
-                            isLoading = false
                             if (task.isSuccessful) {
                                 Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
                                     .show()
@@ -206,7 +214,12 @@ fun LoginApp(navController: NavController) {
                                     task.exception?.message ?: "Authentication failed.",
                                     Toast.LENGTH_SHORT
                                 ).show()
+                                authFailed = true
+                                message = task.exception?.message
                             }
+                            isLoading = false
+                            username = ""
+                            password = ""
                         }
                 } else {
                     Toast.makeText(context, "Invalid Email or No Password Entered", Toast.LENGTH_SHORT).show()
@@ -223,11 +236,7 @@ fun LoginApp(navController: NavController) {
                 .fillMaxWidth()
                 .height(56.dp),
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = colourBackground, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
+            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

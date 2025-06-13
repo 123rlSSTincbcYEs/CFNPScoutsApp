@@ -1,9 +1,12 @@
 package com.example.app
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +20,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,9 +47,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.tv.material3.Button
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import java.time.LocalDate
@@ -195,19 +206,82 @@ fun NewItemUi(navController: NavController) {
     ) {
         Column(
             modifier = Modifier
-                .background(colourSecondary, shape = RoundedCornerShape(12.dp))
+                .background(colourBackground, shape = RoundedCornerShape(12.dp))
                 .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(12.dp))
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .fillMaxWidth()
+                    .height(250.dp)
                     .background(Color(0xFFD2B48C), RoundedCornerShape(8.dp))
                     .border(1.dp, Color.Black, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Image", color = Color.Black)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                FilledTonalButton (
+                    onClick = {
+                        Log.d("click", "click")
+                        navController.navigate("dashboard")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(2.dp, Color.White),
+                ) {
+                    Text("Cancel", color = Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingOverlay(isLoading: Boolean) {
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .zIndex(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White, strokeWidth = 4.dp)
+        }
+    }
+}
+
+@Composable
+fun ErrorPopup(message: String, authStat: Boolean, onDismiss: () -> Unit) {
+    if (authStat) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .zIndex(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.Default.Warning, contentDescription = "Error", tint = Color.Red, modifier = Modifier.size(128.dp))
+                Text("Error", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 32.sp)
+                Text(message, color = Color.Red, fontSize = 20.sp, textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(16.dp))
+                FilledTonalButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(2.dp, Color.White),
+                    modifier = Modifier.width(100.dp)
+                ) {
+                    Text("Dismiss", color = Color.White)
+                }
             }
         }
     }
