@@ -4,10 +4,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -129,22 +131,18 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?, navCont
                         IconButton(onClick = { expanded = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "More options")
                         }
-
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Mark As Returned") },
-                                leadingIcon = { Icon(Icons.Default.Check, contentDescription = "Mark As Returned") },
-                                onClick = {expanded = false}
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Report Missing") },
-                                leadingIcon = { Icon(Icons.Default.Warning, contentDescription = "Report Missing") },
-                                onClick = {expanded = false}
-                            )
-                            HorizontalDivider()
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
                             DropdownMenuItem(
                                 text = { Text("Edit") },
-                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Edit") },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "Edit"
+                                    )
+                                },
                                 onClick = {
                                     expanded = false
                                     navController.navigate("edit")
@@ -153,28 +151,15 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?, navCont
                             HorizontalDivider()
                             DropdownMenuItem(
                                 text = { Text("View Details") },
-                                leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = "View Details") },
-                                onClick = {expanded = false}
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Outlined.Info,
+                                        contentDescription = "View Details"
+                                    )
+                                },
+                                onClick = { expanded = false }
                             )
                         }
-                    }
-                    Spacer(modifier = Modifier.height(30.dp))
-                    if (colourScheme != Color(0xFF306bb1)) {
-                        Text(
-                            "Due in $dd Days",
-                            color = colourScheme,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    } else {
-                        Text(
-                            "Request Pending",
-                            color = colourScheme,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
                     }
                 }
             }
@@ -196,4 +181,34 @@ fun daysUntil(targetDate: java.util.Date): Long {
 @Composable
 fun EditUi(navController: NavController, id: String?) {
 
+}
+
+@Composable
+fun NewItemUi(navController: NavController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .background(colourBackground),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Column(
+            modifier = Modifier
+                .background(colourSecondary, shape = RoundedCornerShape(12.dp))
+                .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(12.dp))
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .background(Color(0xFFD2B48C), RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.Black, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Image", color = Color.Black)
+            }
+        }
+    }
 }

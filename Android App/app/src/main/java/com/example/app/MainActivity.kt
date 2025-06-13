@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -77,6 +78,9 @@ fun RootApp() {
         composable("edit") {
             EditUi(navController, null)
         }
+        composable("newItem") {
+            NewItemUi(navController)
+        }
     }
 }
 
@@ -114,7 +118,8 @@ fun LoginApp(navController: NavController) {
                 }
             },
             modifier = Modifier
-                .padding(8.dp),
+                .padding(8.dp)
+                .width(300.dp),
             textStyle = TextStyle(fontSize = 18.sp),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             colors = OutlinedTextFieldDefaults.colors(
@@ -139,7 +144,8 @@ fun LoginApp(navController: NavController) {
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier
-                    .padding(8.dp),
+                .padding(8.dp)
+                .width(300.dp),
             textStyle = TextStyle(fontSize = 18.sp),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done

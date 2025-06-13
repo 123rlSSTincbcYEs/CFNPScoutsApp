@@ -84,41 +84,41 @@ fun DashboardTApp(navController: NavController) {
                         .padding(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row() {
-                        var expanded by remember { mutableStateOf(false) }
-                        Column (horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(onClick = { expanded = true }) {
-                                Icon(Icons.Filled.FilterList, contentDescription = "Filters")
-                            }
-                        }
-
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("All") },
-                                leadingIcon = { Icon(Icons.Default.Apps, contentDescription = "All") },
-                                trailingIcon = { Icon(Icons.Default.Check, contentDescription = "All") },
-                                onClick = {expanded = false}
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("Due Soon") },
-                                leadingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = "Due Soon") },
-                                onClick = {expanded = false}
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Normal") },
-                                leadingIcon = { Icon(Icons.Default.FiberManualRecord, contentDescription = "Normal") },
-                                onClick = {
-                                    expanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Requests") },
-                                leadingIcon = { Icon(Icons.Default.Mail, contentDescription = "Requests") },
-                                onClick = {expanded = false}
-                            )
-                        }
-                    }
+//                    Row() {
+//                        var expanded by remember { mutableStateOf(false) }
+//                        Column (horizontalAlignment = Alignment.CenterHorizontally) {
+//                            IconButton(onClick = { expanded = true }) {
+//                                Icon(Icons.Filled.FilterList, contentDescription = "Filters")
+//                            }
+//                        }
+//
+//                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+//                            DropdownMenuItem(
+//                                text = { Text("All") },
+//                                leadingIcon = { Icon(Icons.Default.Apps, contentDescription = "All") },
+//                                trailingIcon = { Icon(Icons.Default.Check, contentDescription = "All") },
+//                                onClick = {expanded = false}
+//                            )
+//                            HorizontalDivider()
+//                            DropdownMenuItem(
+//                                text = { Text("Due Soon") },
+//                                leadingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = "Due Soon") },
+//                                onClick = {expanded = false}
+//                            )
+//                            DropdownMenuItem(
+//                                text = { Text("Normal") },
+//                                leadingIcon = { Icon(Icons.Default.FiberManualRecord, contentDescription = "Normal") },
+//                                onClick = {
+//                                    expanded = false
+//                                }
+//                            )
+//                            DropdownMenuItem(
+//                                text = { Text("Requests") },
+//                                leadingIcon = { Icon(Icons.Default.Mail, contentDescription = "Requests") },
+//                                onClick = {expanded = false}
+//                            )
+//                        }
+//                    }
 
                     for (item in items) {
                         val name = item["Name"] as? String ?: ""
@@ -137,7 +137,7 @@ fun DashboardTApp(navController: NavController) {
                     }
                     Row() {
                         Button(
-                            onClick = { /* TODO */ },
+                            onClick = {navController.navigate("newItem")},
                             colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(2.dp, Color.White),
