@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import java.time.LocalDate
@@ -68,7 +69,7 @@ fun getItemsFromFirestore(
 }
 
 @Composable
-fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?) {
+fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?, navController: NavController) {
     var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
     colourScheme = if (dd == null) {
         Color(0xFF306bb1)
@@ -144,7 +145,10 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?) {
                             DropdownMenuItem(
                                 text = { Text("Edit") },
                                 leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Edit") },
-                                onClick = {expanded = false}
+                                onClick = {
+                                    expanded = false
+                                    navController.navigate("edit")
+                                }
                             )
                             HorizontalDivider()
                             DropdownMenuItem(
@@ -158,28 +162,20 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?) {
                     if (colourScheme != Color(0xFF306bb1)) {
                         Text(
                             "Due in $dd Days",
-                            color = Color.Red,
+                            color = colourScheme,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    } else {
+                        Text(
+                            "Request Pending",
+                            color = colourScheme,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
-//                        Button(
-//                            onClick = {},
-//                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)),
-//                            shape = RoundedCornerShape(8.dp)
-//                        ) {
-//                            Text("Mark As Returned", color = Color.White, fontSize = 12.sp)
-//                        }
-//                        Spacer(modifier = Modifier.height(8.dp))
-//                        Button(
-//                            onClick = {},
-//                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-//                            shape = RoundedCornerShape(8.dp)
-//                        ) {
-//                            Text("Report Missing", color = Color.White, fontSize = 12.sp)
-//                        }
-
                 }
             }
         }
@@ -195,4 +191,9 @@ fun daysUntil(targetDate: java.util.Date): Long {
     val today = LocalDate.now()
 
     return ChronoUnit.DAYS.between(today, localTargetDate)
+}
+
+@Composable
+fun EditUi(navController: NavController, id: String?) {
+
 }
