@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
@@ -37,7 +39,10 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +50,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -196,52 +204,129 @@ fun EditUi(navController: NavController, id: String?) {
 
 @Composable
 fun NewItemUi(navController: NavController) {
+    var itemName by remember { mutableStateOf("") }
+    var itemDescription by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(16.dp)
             .background(colourBackground),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
             modifier = Modifier
-                .background(colourBackground, shape = RoundedCornerShape(12.dp))
-                .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(12.dp))
-                .padding(8.dp),
+                .background(colourBackground, shape = RoundedCornerShape(16.dp))
+                .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = "Add New Item",
+                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+                color = colourSecondaryText,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
-                    .background(Color(0xFFD2B48C), RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.Black, RoundedCornerShape(8.dp)),
+                    .height(200.dp)
+                    .background(Color(0xFFD2B48C), RoundedCornerShape(12.dp))
+                    .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Image", color = Color.Black)
+                Icon(Icons.Default.Image, contentDescription = "Image Placeholder", tint = Color.DarkGray, modifier = Modifier.size(64.dp))
             }
+
             Spacer(modifier = Modifier.height(16.dp))
-            Row(
+
+            OutlinedTextField(
+                value = itemName,
+                onValueChange = { itemName = it },
+                label = { Text("Name") },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 18.sp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colourSecondary,
+                    unfocusedContainerColor = colourSecondary,
+                    focusedTextColor = colourSecondaryText,
+                    unfocusedTextColor = colourSecondaryText,
+                    focusedBorderColor = colourSecondaryText,
+                    unfocusedBorderColor = colourSecondaryText,
+                    focusedLabelColor = colourSecondaryText,
+                    unfocusedLabelColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = itemDescription,
+                onValueChange = { itemDescription = it },
+                label = { Text("Description") },
+                textStyle = TextStyle(fontSize = 18.sp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colourSecondary,
+                    unfocusedContainerColor = colourSecondary,
+                    focusedTextColor = colourSecondaryText,
+                    unfocusedTextColor = colourSecondaryText,
+                    focusedBorderColor = colourSecondaryText,
+                    unfocusedBorderColor = colourSecondaryText,
+                    focusedLabelColor = colourSecondaryText,
+                    unfocusedLabelColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText,
+                ),
                 modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                    .fillMaxWidth()
+                    .height(120.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                FilledTonalButton (
+                FilledTonalButton(
                     onClick = {
-                        Log.d("click", "click")
                         navController.navigate("dashboard")
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(50),
                     border = BorderStroke(2.dp, Color.White),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
+                        .height(48.dp)
                 ) {
-                    Text("Cancel", color = Color.White)
+                    Text("Cancel", color = Color.White, fontSize = 16.sp)
+                }
+
+                FilledTonalButton(
+                    onClick = {
+                        navController.navigate("dashboard")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
+                    shape = RoundedCornerShape(50),
+                    border = BorderStroke(2.dp, Color.White),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                        .height(48.dp)
+                ) {
+                    Text("Create", color = Color.White, fontSize = 16.sp)
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun LoadingOverlay(isLoading: Boolean) {

@@ -106,8 +106,6 @@ fun LoginApp(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LoadingOverlay(isLoading = isLoading)
-        ErrorPopup(message = message ?: "Authentication failed.", authStat = authFailed, onDismiss = { authFailed = false })
-
         Text("Login", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
