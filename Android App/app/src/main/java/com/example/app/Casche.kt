@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Check
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -206,6 +211,10 @@ fun EditUi(navController: NavController, id: String?) {
 fun NewItemUi(navController: NavController) {
     var itemName by remember { mutableStateOf("") }
     var itemDescription by remember { mutableStateOf("") }
+    var quantity by remember { mutableIntStateOf(0) }
+    var normal by remember { mutableIntStateOf(0) }
+    var damaged by remember { mutableIntStateOf(0) }
+    var missing by remember { mutableIntStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -232,8 +241,8 @@ fun NewItemUi(navController: NavController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
-                    .background(Color(0xFFD2B48C), RoundedCornerShape(12.dp))
+                    .height(300.dp)
+                    .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
                     .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
@@ -241,51 +250,86 @@ fun NewItemUi(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(5f)
+                ) {
+                    OutlinedTextField(
+                        value = itemName,
+                        onValueChange = { itemName = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 14.sp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = colourSecondary,
+                            unfocusedContainerColor = colourSecondary,
+                            focusedTextColor = colourSecondaryText,
+                            unfocusedTextColor = colourSecondaryText,
+                            focusedBorderColor = colourSecondaryText,
+                            unfocusedBorderColor = colourSecondaryText,
+                            focusedLabelColor = colourSecondaryText,
+                            unfocusedLabelColor = colourSecondaryText,
+                            cursorColor = colourSecondaryText,
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-            OutlinedTextField(
-                value = itemName,
-                onValueChange = { itemName = it },
-                label = { Text("Name") },
-                singleLine = true,
-                textStyle = TextStyle(fontSize = 18.sp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = colourSecondary,
-                    unfocusedContainerColor = colourSecondary,
-                    focusedTextColor = colourSecondaryText,
-                    unfocusedTextColor = colourSecondaryText,
-                    focusedBorderColor = colourSecondaryText,
-                    unfocusedBorderColor = colourSecondaryText,
-                    focusedLabelColor = colourSecondaryText,
-                    unfocusedLabelColor = colourSecondaryText,
-                    cursorColor = colourSecondaryText,
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = itemDescription,
+                        onValueChange = { itemDescription = it },
+                        label = { Text("Description") },
+                        textStyle = TextStyle(fontSize = 12.sp),
+                        singleLine = false,
+                        maxLines = 6,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = colourSecondary,
+                            unfocusedContainerColor = colourSecondary,
+                            focusedTextColor = colourSecondaryText,
+                            unfocusedTextColor = colourSecondaryText,
+                            focusedBorderColor = colourSecondaryText,
+                            unfocusedBorderColor = colourSecondaryText,
+                            focusedLabelColor = colourSecondaryText,
+                            unfocusedLabelColor = colourSecondaryText,
+                            cursorColor = colourSecondaryText,
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                    )
+                }
 
-            OutlinedTextField(
-                value = itemDescription,
-                onValueChange = { itemDescription = it },
-                label = { Text("Description") },
-                textStyle = TextStyle(fontSize = 18.sp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = colourSecondary,
-                    unfocusedContainerColor = colourSecondary,
-                    focusedTextColor = colourSecondaryText,
-                    unfocusedTextColor = colourSecondaryText,
-                    focusedBorderColor = colourSecondaryText,
-                    unfocusedBorderColor = colourSecondaryText,
-                    focusedLabelColor = colourSecondaryText,
-                    unfocusedLabelColor = colourSecondaryText,
-                    cursorColor = colourSecondaryText,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-            )
+                Column(
+                    modifier = Modifier
+                        .weight(2f)
+                        .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text("Status", color = colourSecondaryText, fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Total Qty: $quantity", color = colourSecondaryText, fontSize = 14.sp)
+                    Text("Normal: $normal", color = colourSecondaryText, fontSize = 12.sp)
+                    Text("Damaged: $damaged", color = colourSecondaryText, fontSize = 12.sp)
+                    Text("Missing: $missing", color = colourSecondaryText, fontSize = 12.sp)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    FilledTonalButton(
+                        onClick = { TODO() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
+                        shape = RoundedCornerShape(20),
+                    ) {
+                        Text("Edit", color = Color.White, fontSize = 12.sp)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -298,7 +342,7 @@ fun NewItemUi(navController: NavController) {
                         navController.navigate("dashboard")
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
-                    shape = RoundedCornerShape(50),
+                    shape = RoundedCornerShape(30),
                     border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .weight(1f)
@@ -313,7 +357,7 @@ fun NewItemUi(navController: NavController) {
                         navController.navigate("dashboard")
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
-                    shape = RoundedCornerShape(50),
+                    shape = RoundedCornerShape(30),
                     border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .weight(1f)

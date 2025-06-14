@@ -197,6 +197,7 @@ fun LoginApp(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         FilledTonalButton(
+            shape = RoundedCornerShape(30),
             onClick = {
                 if (isValidEmail and password.isNotEmpty()) {
                     isLoading = true
