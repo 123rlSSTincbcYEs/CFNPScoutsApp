@@ -76,7 +76,7 @@ fun RootApp() {
             LoginApp(navController)
         }
         composable("edit") {
-            EditUi(navController, null)
+            EditUi(navController, 0)
         }
         composable("newItem") {
             NewItemUi(navController)

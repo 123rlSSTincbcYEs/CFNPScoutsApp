@@ -39,7 +39,6 @@ android {
     buildFeatures {
         compose = true
     }
-    buildToolsVersion = "26.0.2"
 }
 
 dependencies {

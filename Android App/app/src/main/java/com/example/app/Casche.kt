@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -60,6 +62,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -203,11 +206,6 @@ fun daysUntil(targetDate: java.util.Date): Long {
 }
 
 @Composable
-fun EditUi(navController: NavController, id: String?) {
-
-}
-
-@Composable
 fun NewItemUi(navController: NavController) {
     var itemName by remember { mutableStateOf("") }
     var itemDescription by remember { mutableStateOf("") }
@@ -250,84 +248,96 @@ fun NewItemUi(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(5f)
+
+            Column() {
+
+                Edit_Status(true)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = itemName,
-                        onValueChange = { itemName = it },
-                        label = { Text("Name") },
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 14.sp),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = colourSecondary,
-                            unfocusedContainerColor = colourSecondary,
-                            focusedTextColor = colourSecondaryText,
-                            unfocusedTextColor = colourSecondaryText,
-                            focusedBorderColor = colourSecondaryText,
-                            unfocusedBorderColor = colourSecondaryText,
-                            focusedLabelColor = colourSecondaryText,
-                            unfocusedLabelColor = colourSecondaryText,
-                            cursorColor = colourSecondaryText,
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = itemDescription,
-                        onValueChange = { itemDescription = it },
-                        label = { Text("Description") },
-                        textStyle = TextStyle(fontSize = 12.sp),
-                        singleLine = false,
-                        maxLines = 6,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = colourSecondary,
-                            unfocusedContainerColor = colourSecondary,
-                            focusedTextColor = colourSecondaryText,
-                            unfocusedTextColor = colourSecondaryText,
-                            focusedBorderColor = colourSecondaryText,
-                            unfocusedBorderColor = colourSecondaryText,
-                            focusedLabelColor = colourSecondaryText,
-                            unfocusedLabelColor = colourSecondaryText,
-                            cursorColor = colourSecondaryText,
-                        ),
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(2f)
-                        .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
-                        .padding(8.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text("Status", color = colourSecondaryText, fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Total Qty: $quantity", color = colourSecondaryText, fontSize = 14.sp)
-                    Text("Normal: $normal", color = colourSecondaryText, fontSize = 12.sp)
-                    Text("Damaged: $damaged", color = colourSecondaryText, fontSize = 12.sp)
-                    Text("Missing: $missing", color = colourSecondaryText, fontSize = 12.sp)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    FilledTonalButton(
-                        onClick = { TODO() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
-                        shape = RoundedCornerShape(20),
+                            .weight(5f)
                     ) {
-                        Text("Edit", color = Color.White, fontSize = 12.sp)
+                        OutlinedTextField(
+                            value = itemName,
+                            onValueChange = { itemName = it },
+                            label = { Text("Name") },
+                            singleLine = true,
+                            textStyle = TextStyle(fontSize = 14.sp),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = colourSecondary,
+                                unfocusedContainerColor = colourSecondary,
+                                focusedTextColor = colourSecondaryText,
+                                unfocusedTextColor = colourSecondaryText,
+                                focusedBorderColor = colourSecondaryText,
+                                unfocusedBorderColor = colourSecondaryText,
+                                focusedLabelColor = colourSecondaryText,
+                                unfocusedLabelColor = colourSecondaryText,
+                                cursorColor = colourSecondaryText,
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = itemDescription,
+                            onValueChange = { itemDescription = it },
+                            label = { Text("Description") },
+                            textStyle = TextStyle(fontSize = 12.sp),
+                            singleLine = false,
+                            maxLines = 6,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = colourSecondary,
+                                unfocusedContainerColor = colourSecondary,
+                                focusedTextColor = colourSecondaryText,
+                                unfocusedTextColor = colourSecondaryText,
+                                focusedBorderColor = colourSecondaryText,
+                                unfocusedBorderColor = colourSecondaryText,
+                                focusedLabelColor = colourSecondaryText,
+                                unfocusedLabelColor = colourSecondaryText,
+                                cursorColor = colourSecondaryText,
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp)
+                        )
                     }
+
+//                    Column(
+//                        modifier = Modifier
+//                            .weight(2f)
+//                            .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
+//                            .padding(8.dp),
+//                        horizontalAlignment = Alignment.Start
+//                    ) {
+//                        Text(
+//                            "Status",
+//                            color = colourSecondaryText,
+//                            fontSize = 18.sp,
+//                            fontWeight = FontWeight.Bold,
+//                            textAlign = TextAlign.Center
+//                        )
+//                        Spacer(modifier = Modifier.height(8.dp))
+//                        Text("Total Qty: $quantity", color = colourSecondaryText, fontSize = 14.sp)
+//                        Text("Normal: $normal", color = Color(0xFF2e8b57), fontSize = 13.sp)
+//                        Text("Damaged: $damaged", color = Color(0xFFaf2522), fontSize = 13.sp)
+//                        Text("Missing: $missing", color = Color(0xFFaf2522), fontSize = 13.sp)
+//
+//                        Spacer(modifier = Modifier.height(16.dp))
+//
+//                        FilledTonalButton(
+//                            onClick = { TODO() },
+//                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
+//                            shape = RoundedCornerShape(20),
+//                        ) {
+//                            Text("Edit", color = Color.White, fontSize = 12.sp)
+//                        }
+//                    }
                 }
             }
 
@@ -414,4 +424,119 @@ fun ErrorPopup(message: String, authStat: Boolean, onDismiss: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun Edit_Status(opEn: Boolean) {
+    var normal by remember { mutableIntStateOf(0) }
+    var damaged by remember { mutableIntStateOf(0) }
+    var missing by remember { mutableIntStateOf(0) }
+    val total = normal + damaged + missing
+
+    if (opEn) {
+        Box(
+            modifier = Modifier
+                .background(Color.White)
+                .border(2.dp, colourSecondary, RoundedCornerShape(4.dp))
+                .fillMaxWidth()
+                .zIndex(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(5.dp)
+                    ) {
+                        Text("Normal: ", fontSize = 12.sp)
+                        TextField(
+                            value = if (normal == 0) "" else normal.toString(),
+                            onValueChange = { newText ->
+                                if (newText.length <= 3 && newText.all { it.isDigit() }) {
+                                    val number = newText.toIntOrNull()
+                                    if (newText.isEmpty()) {
+                                        normal = 0
+                                    } else if (number != null && number in 1..999) {
+                                        normal = number
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            textStyle = TextStyle(fontSize = 12.sp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier
+                                .width(52.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = colourBackground,
+                                unfocusedContainerColor = colourBackground,
+                            )
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(5.dp)
+                    ) {
+                        Text("Missing: ", fontSize = 12.sp)
+                        TextField(
+                            value = if (missing == 0) "" else missing.toString(),
+                            onValueChange = { newText ->
+                                if (newText.length <= 3 && newText.all { it.isDigit() }) {
+                                    val number = newText.toIntOrNull()
+                                    if (newText.isEmpty()) {
+                                        missing = 0
+                                    } else if (number != null && number in 1..999) {
+                                        missing = number
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            textStyle = TextStyle(fontSize = 12.sp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier
+                                .width(52.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = colourBackground,
+                                unfocusedContainerColor = colourBackground,
+                            )
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(5.dp)
+                    ) {
+                        Text("Damaged: ", fontSize = 12.sp)
+                        TextField(
+                            value = if (damaged == 0) "" else damaged.toString(),
+                            onValueChange = { newText ->
+                                if (newText.length <= 3 && newText.all { it.isDigit() }) {
+                                    val number = newText.toIntOrNull()
+                                    if (newText.isEmpty()) {
+                                        damaged = 0
+                                    } else if (number != null && number in 1..999) {
+                                        damaged = number
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            textStyle = TextStyle(fontSize = 12.sp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier
+                                .width(52.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = colourBackground,
+                                unfocusedContainerColor = colourBackground,
+                            )
+                        )
+                    }
+                }
+                Text("Total: $total", color = colourSecondaryText, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun EditUi(navController: NavController, item: Int) {
+
 }
