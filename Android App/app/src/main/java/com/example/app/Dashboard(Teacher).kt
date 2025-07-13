@@ -121,9 +121,9 @@ fun DashboardTApp(navController: NavController) {
 //                    }
 
                     for (item in items) {
-                        val name = item["Name"] as? String ?: ""
-                        val description = item["Description"] as? String ?: ""
-                        val quantity = (item["Quantity"] as? Long)?.toInt() ?: 0
+                        val name = item["name"] as? String ?: ""
+                        val description = item["description"] as? String ?: ""
+                        val quantity = (item["quantity"] as? Long)?.toInt() ?: 0
                         val dueDate = item["Due Date"] as? com.google.firebase.Timestamp
                         val days = dueDate?.toDate()?.let { daysUntil(it) }
 

@@ -2,6 +2,7 @@ package com.example.app
 
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -59,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -213,6 +215,7 @@ fun NewItemUi(navController: NavController) {
     var normal by remember { mutableIntStateOf(0) }
     var damaged by remember { mutableIntStateOf(0) }
     var missing by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -251,7 +254,13 @@ fun NewItemUi(navController: NavController) {
 
             Column() {
 
-                Edit_Status(true)
+                Edit_Status(normal = normal,
+                    onNormalChange = { normal = it },
+                    damaged = damaged,
+                    onDamagedChange = { damaged = it },
+                    missing = missing,
+                    onMissingChange = { missing = it },
+                    true)
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -364,7 +373,28 @@ fun NewItemUi(navController: NavController) {
 
                 FilledTonalButton(
                     onClick = {
-                        navController.navigate("dashboard")
+                        val item = InventoryItem(
+                            Name = itemName,
+                            Description = itemDescription,
+                            Quantity = QuantityStatus(
+                                normal = normal,
+                                damaged = damaged,
+                                missing = missing,
+                                total = normal+damaged+missing
+                            )
+                        )
+                        db.collection("items")
+                            .add(item)
+                            .addOnSuccessListener {
+                                navController.navigate("dashboard")
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(
+                                    context,
+                                    "Failed to create item: ${e.localizedMessage}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
                     shape = RoundedCornerShape(30),
@@ -427,10 +457,7 @@ fun ErrorPopup(message: String, authStat: Boolean, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun Edit_Status(opEn: Boolean) {
-    var normal by remember { mutableIntStateOf(0) }
-    var damaged by remember { mutableIntStateOf(0) }
-    var missing by remember { mutableIntStateOf(0) }
+fun Edit_Status(normal: Int, onNormalChange: (Int) -> Unit, damaged: Int, onDamagedChange: (Int) -> Unit, missing: Int, onMissingChange: (Int) -> Unit, opEn: Boolean) {
     val total = normal + damaged + missing
 
     if (opEn) {
@@ -452,18 +479,16 @@ fun Edit_Status(opEn: Boolean) {
                         TextField(
                             value = if (normal == 0) "" else normal.toString(),
                             onValueChange = { newText ->
-                                if (newText.length <= 3 && newText.all { it.isDigit() }) {
-                                    val number = newText.toIntOrNull()
-                                    if (newText.isEmpty()) {
-                                        normal = 0
-                                    } else if (number != null && number in 1..999) {
-                                        normal = number
-                                    }
+                                val number = newText.toIntOrNull()
+                                if (newText.isEmpty()) {
+                                    onNormalChange(0)
+                                } else if (number != null && number in 0..999) {
+                                    onNormalChange(number)
                                 }
                             },
                             singleLine = true,
                             textStyle = TextStyle(fontSize = 12.sp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                             modifier = Modifier
                                 .width(52.dp),
                             colors = TextFieldDefaults.colors(
@@ -480,18 +505,16 @@ fun Edit_Status(opEn: Boolean) {
                         TextField(
                             value = if (missing == 0) "" else missing.toString(),
                             onValueChange = { newText ->
-                                if (newText.length <= 3 && newText.all { it.isDigit() }) {
-                                    val number = newText.toIntOrNull()
-                                    if (newText.isEmpty()) {
-                                        missing = 0
-                                    } else if (number != null && number in 1..999) {
-                                        missing = number
-                                    }
+                                val number = newText.toIntOrNull()
+                                if (newText.isEmpty()) {
+                                    onMissingChange(0)
+                                } else if (number != null && number in 0..999) {
+                                    onMissingChange(number)
                                 }
                             },
                             singleLine = true,
                             textStyle = TextStyle(fontSize = 12.sp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                             modifier = Modifier
                                 .width(52.dp),
                             colors = TextFieldDefaults.colors(
@@ -508,18 +531,16 @@ fun Edit_Status(opEn: Boolean) {
                         TextField(
                             value = if (damaged == 0) "" else damaged.toString(),
                             onValueChange = { newText ->
-                                if (newText.length <= 3 && newText.all { it.isDigit() }) {
-                                    val number = newText.toIntOrNull()
-                                    if (newText.isEmpty()) {
-                                        damaged = 0
-                                    } else if (number != null && number in 1..999) {
-                                        damaged = number
-                                    }
+                                val number = newText.toIntOrNull()
+                                if (newText.isEmpty()) {
+                                    onDamagedChange(0)
+                                } else if (number != null && number in 0..999) {
+                                    onDamagedChange(number)
                                 }
                             },
                             singleLine = true,
                             textStyle = TextStyle(fontSize = 12.sp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                             modifier = Modifier
                                 .width(52.dp),
                             colors = TextFieldDefaults.colors(
@@ -540,3 +561,16 @@ fun Edit_Status(opEn: Boolean) {
 fun EditUi(navController: NavController, item: Int) {
 
 }
+
+data class InventoryItem(
+    val Name: String = "",
+    val Description: String = "",
+    val Quantity: QuantityStatus = QuantityStatus()
+)
+
+data class QuantityStatus(
+    val normal: Int = 0,
+    val damaged: Int = 0,
+    val missing: Int = 0,
+    val total: Int = 0,
+)
