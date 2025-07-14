@@ -1,8 +1,8 @@
 import SwiftUI
-struct LoginView: View {    
+struct AddItemView: View {    
     var body: some View {
 	Text("Hello, world!")
 }
 #Preview {
-    ContentView()
+    AddItemView()
 }
