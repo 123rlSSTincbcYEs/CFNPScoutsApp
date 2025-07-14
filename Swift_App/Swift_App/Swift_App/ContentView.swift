@@ -1,24 +1,75 @@
 import SwiftUI
-struct ContentView: View {
-    @State private var correctEmail = "goh_rui_jie_thaddeus@s2024.ssts.edu.sg"
-    @State private var email = ""
-    @State private var password = ""
-    @State private var correctPassword = "iloveswift"
-    @State private var selection:String? = nil
+
+struct LoginView: View {
+    @State private var username: String = ""
+    @State private var password: String = ""
+    @State private var errorMessage: String? = nil
+    @State private var isLoggedIn = false
+    
     var body: some View {
-        NavigationStack{
-            VStack {
-                Text("Login").font(.title)
-                TextField("Email", text: self.$email)
-                TextField("Password", text: self.$password)
-                Button("Sign in")
-                {
-                    if (email == correctEmail) && (password == correctPassword) {selection = "A"}
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Login")
+                    .font(.largeTitle)
+                    .bold()
+                
+                TextField("Username", text: $username)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .autocapitalization(.none)
+                    .padding(.horizontal)
+                
+                SecureField("Password", text: $password)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+                
+                if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
-                NavigationLink(destination: MenuView(), tag: "A", selection: $selection) {}
+                
+                Button(action: handleLogin) {
+                    Text("Login")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding(.horizontal)
+                NavigationLink(
+                    destination: MenuView(),
+                    isActive: $isLoggedIn
+                ) {
+                    EmptyView()
+                }
+                
+                Spacer()
             }
             .padding()
+            .navigationBarHidden(true)
         }
+    }
+    
+    func handleLogin() {
+        if username.isEmpty || password.isEmpty {
+            errorMessage = "Please enter both username and password."
+            return
+        }
+        
+        if username == "admin" && password == "password" {
+            errorMessage = nil
+            isLoggedIn = true
+        } else {
+            errorMessage = "Invalid username or password."
+        }
+    }
+}
+
+
+struct ContentView: View {
+    var body: some View {
+        LoginView()
     }
 }
 #Preview {
