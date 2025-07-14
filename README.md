@@ -1,4 +1,4 @@
-# CFNP(Code For Non-Profits)
+# CFNP's Project Serve App
 
 **Note: This app is meant for internal use at SST Singapore (for now) and is currently in the early stages of development.**
 
