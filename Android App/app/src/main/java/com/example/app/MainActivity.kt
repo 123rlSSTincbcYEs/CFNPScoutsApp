@@ -2,6 +2,7 @@ package com.example.app
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -16,13 +17,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -45,10 +44,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -67,8 +68,12 @@ private lateinit var auth: FirebaseAuth
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun RootApp() {
+    val currentUser = Firebase.auth.currentUser
+    val startDestination = remember(currentUser) {
+        if (currentUser != null) "dashboard" else "login"
+    }
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "login") {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable("dashboard") {
             DashboardTApp(navController)
         }
@@ -78,8 +83,17 @@ fun RootApp() {
         composable("edit") {
             EditUi(navController, 0)
         }
-        composable("newItem") {
-            NewItemUi(navController)
+        composable("viewItem") {
+            ViewItemUi(navController)
+        }
+        composable(
+            "newItem/{edit}",
+                arguments = listOf(
+                    navArgument("edit") { type = NavType.StringType }
+                )
+        ){ backStackEntry ->
+            val edit = backStackEntry.arguments?.getString("edit").toBoolean()
+            NewItemUi(edit = edit, navController = navController)
         }
     }
 }

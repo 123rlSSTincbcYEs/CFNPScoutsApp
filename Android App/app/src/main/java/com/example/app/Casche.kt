@@ -1,17 +1,22 @@
 package com.example.app
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,20 +25,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,9 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,18 +68,35 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
-import androidx.tv.material3.Button
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.net.HttpURLConnection
+import java.net.URL
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.core.net.toUri
+import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
+import android.util.Base64
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
 
 val colourButton = Color(0xFF2E8B57)
 val colourBackground = Color(0xFFF3F1ED)
 val colourSecondary = Color(0xFFD2B48C)
 val colourSecondaryText = Color(0xFF5D5D5D)
 val db = Firebase.firestore
+val scriptUrl = "https://script.google.com/macros/s/AKfycbzOY9i7u072jGU0H5ECJ9Nvaud1lnfZ-L1r2ex63PasYMm_ZLQhiFgtYXvRR7fEaS7Zmw/exec"
+var currentItem: Map<String, Any>? = null
+var imageUrl by mutableStateOf<String?>(null)
 
 fun getItemsFromFirestore(
     collectionName: String,
@@ -91,7 +106,10 @@ fun getItemsFromFirestore(
     db.collection("items")
         .get()
         .addOnSuccessListener { result ->
-            val itemsList = result.documents.mapNotNull { it.data }
+            val itemsList = result.documents.mapNotNull { document ->
+                val data = document.data ?: emptyMap()
+                data + ("id" to document.id)
+            }
             onSuccess(itemsList)
         }
         .addOnFailureListener { exception ->
@@ -100,7 +118,7 @@ fun getItemsFromFirestore(
 }
 
 @Composable
-fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?, navController: NavController) {
+fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: String?, imageBase64: String?, fullItem: Map<String, Any>?, navController: NavController) {
     var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
     colourScheme = if (dd == null) {
         Color(0xFF306bb1)
@@ -174,7 +192,8 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?, navCont
                                 },
                                 onClick = {
                                     expanded = false
-                                    navController.navigate("edit")
+                                    currentItem = fullItem
+                                    navController.navigate("newItem/true")
                                 }
                             )
                             HorizontalDivider()
@@ -186,7 +205,11 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?, navCont
                                         contentDescription = "View Details"
                                     )
                                 },
-                                onClick = { expanded = false }
+                                onClick = {
+                                    expanded = false
+                                    currentItem = fullItem
+                                    navController.navigate("viewItem")
+                                }
                             )
                         }
                     }
@@ -208,14 +231,31 @@ fun daysUntil(targetDate: java.util.Date): Long {
 }
 
 @Composable
-fun NewItemUi(navController: NavController) {
+fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var itemName by remember { mutableStateOf("") }
     var itemDescription by remember { mutableStateOf("") }
+    var base64image by remember { mutableStateOf("") }
     var quantity by remember { mutableIntStateOf(0) }
     var normal by remember { mutableIntStateOf(0) }
     var damaged by remember { mutableIntStateOf(0) }
     var missing by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
+
+    LaunchedEffect(edit) {
+        if (edit == true && currentItem != null) {
+            itemName = currentItem!!["name"] as? String ?: ""
+            itemDescription = currentItem!!["description"] as? String ?: ""
+            base64image = currentItem!!["imageBase64"] as? String ?: ""
+            Log.d("LoadImage", "Image base64: $base64image")
+            imageUrl = base64ToUri(context, base64image).toString()
+            Log.d("LoadImage", "Image loaded from base64: $imageUrl")
+            val quantityMap = currentItem!!["quantity"] as? Map<*, *>
+            normal = (quantityMap?.get("normal") as? Long)?.toInt() ?: 0
+            damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
+            missing = (quantityMap?.get("missing") as? Long)?.toInt() ?: 0
+            quantity = normal + damaged + missing
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -239,16 +279,7 @@ fun NewItemUi(navController: NavController) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
-                    .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Image, contentDescription = "Image Placeholder", tint = Color.DarkGray, modifier = Modifier.size(64.dp))
-            }
+            ImagePickerBox()
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -373,28 +404,75 @@ fun NewItemUi(navController: NavController) {
 
                 FilledTonalButton(
                     onClick = {
-                        val item = InventoryItem(
-                            Name = itemName,
-                            Description = itemDescription,
-                            Quantity = QuantityStatus(
-                                normal = normal,
-                                damaged = damaged,
-                                missing = missing,
-                                total = normal+damaged+missing
-                            )
-                        )
-                        db.collection("items")
-                            .add(item)
-                            .addOnSuccessListener {
-                                navController.navigate("dashboard")
+                        if (itemName.isEmpty() || itemDescription.isEmpty() || normal + damaged + missing == 0) {
+                            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_LONG).show()
+                        } else {
+                            val selectedImageUri: Uri? = imageUrl?.toUri()
+
+                            val imageBase64: String? = selectedImageUri?.let { uri ->
+                                try {
+                                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                                        if (bitmap != null) {
+                                            ByteArrayOutputStream().use { outputStream ->
+                                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                                                val byteArray = outputStream.toByteArray()
+                                                Base64.encodeToString(byteArray, Base64.NO_WRAP)
+                                            }
+                                        } else {
+                                            null
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    null
+                                }
+                            }.toString()
+
+                            fun saveToFirestore(imageBase64: String?) {
+                                val item = InventoryItem(
+                                    Name = itemName,
+                                    Description = itemDescription,
+                                    Quantity = QuantityStatus(
+                                        normal = normal,
+                                        damaged = damaged,
+                                        missing = missing,
+                                        total = normal + damaged + missing
+                                    ),
+                                    ImageBase64 = imageBase64 ?: currentItem?.get("ImageBase64") as? String
+                                )
+
+                                if (edit == true) {
+                                    val docId = currentItem?.get("id") as? String
+                                    if (docId != null) {
+                                        db.collection("items").document(docId)
+                                            .set(item)
+                                            .addOnSuccessListener {
+                                                triggerSheetSync(scriptUrl)
+                                                navController.navigate("dashboard")
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                            }
+                                    } else {
+                                        Toast.makeText(context, "No document ID found", Toast.LENGTH_LONG).show()
+                                    }
+                                } else {
+                                    db.collection("items")
+                                        .add(item)
+                                        .addOnSuccessListener {
+                                            triggerSheetSync(scriptUrl)
+                                            navController.navigate("dashboard")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(context, "Failed to create item: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        }
+                                }
+                                imageUrl = null
                             }
-                            .addOnFailureListener { e ->
-                                Toast.makeText(
-                                    context,
-                                    "Failed to create item: ${e.localizedMessage}",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+
+                            saveToFirestore(imageBase64)
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
                     shape = RoundedCornerShape(30),
@@ -404,7 +482,7 @@ fun NewItemUi(navController: NavController) {
                         .padding(start = 8.dp)
                         .height(48.dp)
                 ) {
-                    Text("Create", color = Color.White, fontSize = 16.sp)
+                    Text(if (edit == true) "Update" else "Create", color = Color.White, fontSize = 16.sp)
                 }
             }
         }
@@ -562,10 +640,182 @@ fun EditUi(navController: NavController, item: Int) {
 
 }
 
+@Composable
+fun ViewItemUi(navController: NavController) {
+    var itemName by remember { mutableStateOf("") }
+    var itemDescription by remember { mutableStateOf("") }
+    var normal by remember { mutableIntStateOf(0) }
+    var damaged by remember { mutableIntStateOf(0) }
+    var missing by remember { mutableIntStateOf(0) }
+    var quantity by remember { mutableIntStateOf(0) }
+
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        currentItem?.let {
+            itemName = it["name"] as? String ?: ""
+            itemDescription = it["description"] as? String ?: ""
+            val quantityMap = it["quantity"] as? Map<*, *>
+            normal = (quantityMap?.get("normal") as? Long)?.toInt() ?: 0
+            damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
+            missing = (quantityMap?.get("missing") as? Long)?.toInt() ?: 0
+            quantity = normal + damaged + missing
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .background(colourBackground),
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("View Item", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = colourSecondaryText)
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
+                .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Image, contentDescription = "Image Placeholder", tint = Color.DarkGray, modifier = Modifier.size(64.dp))
+        }
+
+        OutlinedTextField(
+            value = itemName,
+            onValueChange = {},
+            label = { Text("Item Name") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false,
+            readOnly = true
+        )
+
+        OutlinedTextField(
+            value = itemDescription,
+            onValueChange = {},
+            label = { Text("Description") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            enabled = false,
+            readOnly = true,
+            maxLines = 4
+        )
+
+        OutlinedTextField(
+            value = "Normal: $normal | Damaged: $damaged | Missing: $missing | Total: $quantity",
+            onValueChange = {},
+            label = { Text("Quantity Overview") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false,
+            readOnly = true
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        FilledTonalButton(
+            onClick = { navController.popBackStack() },
+            shape = RoundedCornerShape(30),
+            border = BorderStroke(2.dp, Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+        ) {
+            Text("Back", color = Color.White, fontSize = 16.sp)
+        }
+    }
+}
+
+fun triggerSheetSync(scriptUrl: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val url = URL(scriptUrl)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.connect()
+            val responseCode = conn.responseCode
+            Log.d("SheetSync", "Triggered Google Apps Script, response code: $responseCode")
+        } catch (e: Exception) {
+            Log.e("SheetSync", "Failed to call Apps Script: ${e.localizedMessage}")
+        }
+    }
+}
+
+@Composable
+fun ImagePickerBox() {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUrl = uri?.toString()
+        Log.d("ImagePickerBox", "Image selected: $imageUrl")
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+            .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
+            .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
+            .clickable {
+                launcher.launch("image/*")
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        LoadImage()
+    }
+}
+
+@Composable
+fun LoadImage(base64image: String? = null, alrImg: Boolean? = false) {
+    if (imageUrl != null) {
+        Image(
+            painter = rememberAsyncImagePainter(imageUrl),
+            contentDescription = "Selected Image",
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Default.Image,
+            contentDescription = "Image Placeholder",
+            tint = Color.DarkGray,
+            modifier = Modifier.size(64.dp)
+        )
+    }
+}
+
+fun base64ToUri(context: Context, base64Str: String, fileName: String = "image_from_base64.png"): Uri? {
+    return try {
+        // Decode the base64 string into bytes
+        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
+
+        // Save the bytes to a temporary file in the cache directory
+        val file = File(context.cacheDir, fileName)
+        FileOutputStream(file).use { it.write(decodedBytes) }
+
+        // Return a content Uri for the file using FileProvider
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
 data class InventoryItem(
-    val Name: String = "",
-    val Description: String = "",
-    val Quantity: QuantityStatus = QuantityStatus()
+    val Name: String? = null,
+    val Description: String? = null,
+    val Quantity: QuantityStatus = QuantityStatus(),
+    val ImageBase64: String? = null
 )
 
 data class QuantityStatus(
