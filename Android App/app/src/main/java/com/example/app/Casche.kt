@@ -85,6 +85,9 @@ import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
@@ -239,6 +242,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var normal by remember { mutableIntStateOf(0) }
     var damaged by remember { mutableIntStateOf(0) }
     var missing by remember { mutableIntStateOf(0) }
+    var bitmapImage: Bitmap? = null
     val context = LocalContext.current
 
     LaunchedEffect(edit) {
@@ -246,9 +250,6 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
             itemName = currentItem!!["name"] as? String ?: ""
             itemDescription = currentItem!!["description"] as? String ?: ""
             base64image = currentItem!!["imageBase64"] as? String ?: ""
-            Log.d("LoadImage", "Image base64: $base64image")
-            imageUrl = base64ToUri(context, base64image).toString()
-            Log.d("LoadImage", "Image loaded from base64: $imageUrl")
             val quantityMap = currentItem!!["quantity"] as? Map<*, *>
             normal = (quantityMap?.get("normal") as? Long)?.toInt() ?: 0
             damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
@@ -279,7 +280,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            ImagePickerBox()
+            ImagePickerBox(base64image)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -390,6 +391,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                 FilledTonalButton(
                     onClick = {
                         navController.navigate("dashboard")
+                        imageUrl = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
                     shape = RoundedCornerShape(30),
@@ -465,6 +467,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                             navController.navigate("dashboard")
                                         }
                                         .addOnFailureListener { e ->
+                                            Log.d("NewItemUi", "Failed to create item: ${e.localizedMessage}")
                                             Toast.makeText(context, "Failed to create item: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                         }
                                 }
@@ -746,7 +749,15 @@ fun triggerSheetSync(scriptUrl: String) {
 }
 
 @Composable
-fun ImagePickerBox() {
+fun ImagePickerBox(base64image: String) {
+    val context = LocalContext.current
+
+    val bitmapImage = remember(base64image) {
+        if (imageUrl == null && base64image.isNotEmpty()) {
+            base64ToBitmap(base64image)
+        } else null
+    }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -760,17 +771,15 @@ fun ImagePickerBox() {
             .height(300.dp)
             .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
             .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
-            .clickable {
-                launcher.launch("image/*")
-            },
+            .clickable { launcher.launch("image/*") },
         contentAlignment = Alignment.Center
     ) {
-        LoadImage()
+        LoadImage(bitmapImage)
     }
 }
 
 @Composable
-fun LoadImage(base64image: String? = null, alrImg: Boolean? = false) {
+fun LoadImage(bitmapImage: Bitmap? = null) {
     if (imageUrl != null) {
         Image(
             painter = rememberAsyncImagePainter(imageUrl),
@@ -780,35 +789,36 @@ fun LoadImage(base64image: String? = null, alrImg: Boolean? = false) {
                 .clip(RoundedCornerShape(12.dp)),
             contentScale = ContentScale.Crop
         )
+    } else if (bitmapImage != null) {
+        Image(
+            painter = BitmapPainter(bitmapImage.asImageBitmap()),
+            contentDescription = "Decoded Base64 Image",
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
+        )
     } else {
         Icon(
-            imageVector = Icons.Default.Image,
-            contentDescription = "Image Placeholder",
-            tint = Color.DarkGray,
-            modifier = Modifier.size(64.dp)
+            imageVector = Icons.Default.Add,
+            contentDescription = "Add Image",
+            tint = Color.Black.copy(alpha = 0.5f),
+            modifier = Modifier.size(48.dp)
         )
     }
 }
 
-fun base64ToUri(context: Context, base64Str: String, fileName: String = "image_from_base64.png"): Uri? {
-    return try {
-        // Decode the base64 string into bytes
-        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
-
-        // Save the bytes to a temporary file in the cache directory
-        val file = File(context.cacheDir, fileName)
-        FileOutputStream(file).use { it.write(decodedBytes) }
-
-        // Return a content Uri for the file using FileProvider
-        FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-    } catch (e: Exception) {
+fun base64ToBitmap(base64Str: String): Bitmap? {
+    var decodedImage: Bitmap? = null
+    try {
+        val imageBytes = Base64.decode(base64Str, Base64.DEFAULT)
+        decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    } catch (e: IllegalArgumentException) {
         e.printStackTrace()
         null
     }
+    Log.d("base64ToBitmap", "decodedImage: $decodedImage")
+    return decodedImage
 }
 
 data class InventoryItem(
