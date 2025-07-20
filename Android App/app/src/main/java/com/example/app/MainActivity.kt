@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private lateinit var auth: FirebaseAuth
+lateinit var auth: FirebaseAuth
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -76,6 +76,12 @@ fun RootApp() {
     NavHost(navController = navController, startDestination = startDestination) {
         composable("dashboard") {
             DashboardTApp(navController)
+        }
+        composable("notes") {
+            Notes(navController)
+        }
+        composable("settings") {
+            Settings(navController)
         }
         composable("login") {
             LoginApp(navController)

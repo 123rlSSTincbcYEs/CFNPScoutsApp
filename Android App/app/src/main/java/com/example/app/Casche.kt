@@ -85,12 +85,28 @@ import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.content.FileProvider
+import androidx.navigation.compose.ComposeNavigator.Destination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import java.io.File
 import java.io.FileOutputStream
 
@@ -873,6 +889,82 @@ fun LoadImage(bitmapImage: Bitmap? = null) {
     }
 }
 
+@Composable
+fun Notes(navController: NavController) {
+
+}
+
+@Composable
+fun Settings(navController: NavController) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+    ) {
+        Spacer(modifier = Modifier.height(40.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+                    .align(Alignment.Center)
+            )
+
+            Icon(
+                imageVector = Icons.Default.ArrowBackIosNew,
+                contentDescription = "Back",
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 8.dp)
+                    .size(30.dp)
+                    .clickable { navController.navigate("dashboard") },
+            )
+        }
+
+        Text(
+            text = "Acknowledgements",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "This App IS Made By CFNP(Code For Non Profits)",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = {
+                auth.signOut()
+                navController.navigate("login") {
+                    popUpTo("settings") { inclusive = true }
+                }
+            },
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = colourButton,
+                contentColor = colourBackground
+            ),
+            modifier = Modifier
+                .padding(14.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(30),
+        ) {
+            Text("Logout")
+        }
+    }
+}
+
 fun base64ToBitmap(base64Str: String): Bitmap? {
     var decodedImage: Bitmap? = null
     try {
@@ -899,3 +991,29 @@ data class QuantityStatus(
     val missing: Int = 0,
     val total: Int = 0,
 )
+
+data class BottomNavItem(
+    val label: String,
+    val icon: ImageVector,
+    val route:String,
+)
+
+object Constants {
+    val BottomNavItems = listOf(
+        BottomNavItem(
+            label = "Home",
+            icon = Icons.Filled.Home,
+            route = "dashboard"
+        ),
+        BottomNavItem(
+            label = "Notes",
+            icon = Icons.Filled.Notes,
+            route = "notes"
+        ),
+        BottomNavItem(
+            label = "Settings",
+            icon = Icons.Filled.Settings,
+            route = "settings"
+        )
+    )
+}

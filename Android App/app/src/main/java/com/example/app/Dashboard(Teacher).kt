@@ -5,10 +5,12 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
@@ -81,7 +84,6 @@ fun DashboardTApp(navController: NavController) {
             }
         )
     }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -89,7 +91,28 @@ fun DashboardTApp(navController: NavController) {
             .background(colourBackground),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Dashboard", fontSize = 64.sp)
+        Spacer(modifier = Modifier.height(24.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text(
+                text = "Dashboard",
+                fontSize = 40.sp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 8.dp)
+                    .size(30.dp)
+                    .clickable { navController.navigate("settings") }
+            )
+        }
 
         when {
             errorMessage != null -> {
