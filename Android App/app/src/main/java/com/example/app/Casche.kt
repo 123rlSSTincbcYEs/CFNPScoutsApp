@@ -86,6 +86,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.core.content.FileProvider
@@ -100,6 +102,7 @@ val db = Firebase.firestore
 val scriptUrl = "https://script.google.com/macros/s/AKfycbzOY9i7u072jGU0H5ECJ9Nvaud1lnfZ-L1r2ex63PasYMm_ZLQhiFgtYXvRR7fEaS7Zmw/exec"
 var currentItem: Map<String, Any>? = null
 var imageUrl by mutableStateOf<String?>(null)
+var refresh by mutableStateOf(false)
 
 fun getItemsFromFirestore(
     collectionName: String,
@@ -123,6 +126,11 @@ fun getItemsFromFirestore(
 @Composable
 fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: String?, imageBase64: String?, fullItem: Map<String, Any>?, navController: NavController) {
     var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
+    var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
+    val context = LocalContext.current
+    if (imageBase64 != null){
+        bitmapImage = base64ToBitmap(imageBase64.toString())
+    }
     colourScheme = if (dd == null) {
         Color(0xFF306bb1)
     } else if (dd <= 5) {
@@ -154,7 +162,23 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                         .border(1.dp, Color.Black, RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Image", color = Color.Black)
+                    if (bitmapImage != null) {
+                        Image(
+                            painter = BitmapPainter(bitmapImage!!.asImageBitmap()),
+                            contentDescription = "Decoded Base64 Image",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Block,
+                            contentDescription = "No Image",
+                            tint = Color.Black.copy(alpha = 0.5f),
+                            modifier = Modifier.size(48.dp),
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -199,7 +223,6 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                                     navController.navigate("newItem/true")
                                 }
                             )
-                            HorizontalDivider()
                             DropdownMenuItem(
                                 text = { Text("View Details") },
                                 leadingIcon = {
@@ -212,6 +235,29 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                                     expanded = false
                                     currentItem = fullItem
                                     navController.navigate("viewItem")
+                                }
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Delete"
+                                    )
+                                },
+                                onClick = {
+                                    expanded = false
+                                    db.collection("items").document(id.toString())
+                                        .delete()
+                                        .addOnSuccessListener {
+                                            triggerSheetSync(scriptUrl)
+                                            refresh = true
+                                            Toast.makeText(context, "Delete successful", Toast.LENGTH_LONG).show()
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context, "Delete failed: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        }
                                 }
                             )
                         }
@@ -651,6 +697,7 @@ fun ViewItemUi(navController: NavController) {
     var damaged by remember { mutableIntStateOf(0) }
     var missing by remember { mutableIntStateOf(0) }
     var quantity by remember { mutableIntStateOf(0) }
+    var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
 
     val context = LocalContext.current
 
@@ -663,6 +710,8 @@ fun ViewItemUi(navController: NavController) {
             damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
             missing = (quantityMap?.get("missing") as? Long)?.toInt() ?: 0
             quantity = normal + damaged + missing
+            val imageBase64 = it["imageBase64"] as? String
+            bitmapImage = base64ToBitmap(imageBase64.toString())
         }
     }
 
@@ -684,7 +733,23 @@ fun ViewItemUi(navController: NavController) {
                 .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Image, contentDescription = "Image Placeholder", tint = Color.DarkGray, modifier = Modifier.size(64.dp))
+            if (bitmapImage != null) {
+                Image(
+                    painter = BitmapPainter(bitmapImage!!.asImageBitmap()),
+                    contentDescription = "Decoded Base64 Image",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Block,
+                    contentDescription = "No Image",
+                    tint = Color.Black.copy(alpha = 0.5f),
+                    modifier = Modifier.size(48.dp),
+                )
+            }
         }
 
         OutlinedTextField(

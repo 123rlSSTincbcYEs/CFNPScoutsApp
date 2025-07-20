@@ -148,21 +148,7 @@ fun DashboardTApp(navController: NavController) {
 
                 Button(
                     onClick = {
-                        loading = true
-                        CoroutineScope(Dispatchers.IO).launch {
-                            kotlinx.coroutines.delay(1000)
-                            getItemsFromFirestore(
-                                collectionName = "items",
-                                onSuccess = { fetchedItems ->
-                                    items = fetchedItems
-                                    loading = false
-                                },
-                                onFailure = { e ->
-                                    errorMessage = e.message
-                                    loading = false
-                                }
-                            )
-                        }
+                        refresh = true
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
                     shape = RoundedCornerShape(12.dp),
@@ -173,7 +159,6 @@ fun DashboardTApp(navController: NavController) {
                     Text(text = "Reload", fontSize = 16.sp)
                 }
 
-                // Add item button
                 Button(
                     onClick = { navController.navigate("newItem/false") },
                     colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
@@ -184,18 +169,26 @@ fun DashboardTApp(navController: NavController) {
                     Icon(Icons.Default.Add, contentDescription = "Add Item")
                     Text(text = "Add Item", fontSize = 16.sp)
                 }
+                LaunchedEffect(refresh) {
+                    if (refresh == true) {
+                        loading = true
+                        kotlinx.coroutines.delay(1000)
+                        getItemsFromFirestore(
+                            collectionName = "items",
+                            onSuccess = { fetchedItems ->
+                                items = fetchedItems
+                                loading = false
+                                refresh = false
+                            },
+                            onFailure = { e ->
+                                errorMessage = e.message
+                                loading = false
+                                refresh = false
+                            }
+                        )
+                    }
+                }
             }
         }
     }
-}
-
-fun reloadItems(
-    onSuccess: (List<Map<String, Any>>) -> Unit,
-    onFailure: (Exception) -> Unit
-) {
-    getItemsFromFirestore(
-        collectionName = "items",
-        onSuccess = onSuccess,
-        onFailure = onFailure
-    )
 }
