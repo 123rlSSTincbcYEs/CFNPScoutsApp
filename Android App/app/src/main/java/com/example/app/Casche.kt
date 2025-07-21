@@ -107,6 +107,8 @@ import androidx.core.content.FileProvider
 import androidx.navigation.compose.ComposeNavigator.Destination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.FileOutputStream
 
@@ -902,6 +904,30 @@ fun Settings(navController: NavController) {
             .fillMaxSize()
             .padding(16.dp),
     ) {
+        var name by remember { mutableStateOf("") }
+        var saveStatus by remember { mutableStateOf("Saved") }
+
+        LaunchedEffect(Unit) {
+            val uid = auth.currentUser?.uid
+            if (uid != null) {
+                val snapshot = db.collection("users").document(uid).get().await()
+                if (snapshot.exists()) {
+                    name = snapshot.getString("name") ?: ""
+                }
+            }
+        }
+
+        LaunchedEffect(name) {
+            saveStatus = "Not Saved"
+            delay(1000)
+            val uid = auth.currentUser?.uid
+            if (uid != null) {
+                db.collection("users").document(uid)
+                    .update("name", name)
+                    .addOnSuccessListener { saveStatus = "Saved" }
+                    .addOnFailureListener { saveStatus = "Save Failed" }
+            }
+        }
         Spacer(modifier = Modifier.height(40.dp))
         Box(
             modifier = Modifier
@@ -926,7 +952,40 @@ fun Settings(navController: NavController) {
                     .clickable { navController.navigate("dashboard") },
             )
         }
-
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Name") },
+            singleLine = true,
+            textStyle = TextStyle(fontSize = 14.sp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = colourSecondary,
+                unfocusedContainerColor = colourSecondary,
+                focusedTextColor = colourSecondaryText,
+                unfocusedTextColor = colourSecondaryText,
+                focusedBorderColor = colourSecondaryText,
+                unfocusedBorderColor = colourSecondaryText,
+                focusedLabelColor = colourSecondaryText,
+                unfocusedLabelColor = colourSecondaryText,
+                cursorColor = colourSecondaryText,
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = saveStatus,
+            fontSize = 12.sp,
+            color = when (saveStatus) {
+                "Saved" -> colourButton
+                "Not Saved" -> colourSecondaryText
+                "Save Failed" -> Color.Red
+                else -> Color.Unspecified
+            },
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .align(alignment = Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
                 text = "Contact Us/Tech Support",
         style = MaterialTheme.typography.titleMedium,
@@ -939,6 +998,7 @@ fun Settings(navController: NavController) {
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 32.dp)
         )
+        Spacer(modifier = Modifier.height(240.dp))
         Text(
             text = "Acknowledgements",
             style = MaterialTheme.typography.titleMedium,
@@ -947,7 +1007,7 @@ fun Settings(navController: NavController) {
         )
 
         Text(
-            text = "This App IS Made By CFNP(Code For Non Profits) In Partnership With SST SCouts",
+            text = "This App IS Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 32.dp)
         )

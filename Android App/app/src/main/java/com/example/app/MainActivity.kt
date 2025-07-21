@@ -182,6 +182,17 @@ fun LoginApp(navController: NavController) {
                                 if (task.isSuccessful) {
                                     Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
                                         .show()
+                                    db.collection("users").document(auth.currentUser?.uid.toString()).get()
+                                        .addOnSuccessListener { documentSnapshot ->
+                                            if (!documentSnapshot.exists()) {
+                                                db.collection("users").document(auth.currentUser?.uid.toString())
+                                                    .set(mapOf("name" to auth.currentUser?.uid.toString()))
+                                            }
+                                        }
+                                        .addOnFailureListener { exception ->
+                                            Log.e("Firestore", "Error getting document: ", exception)
+                                        }
+
                                     navController.navigate("dashboard")
                                 } else {
                                     Toast.makeText(
