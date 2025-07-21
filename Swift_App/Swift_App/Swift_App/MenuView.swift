@@ -18,14 +18,10 @@ struct DashboardView: View {
                     .padding()
             }
             
-            ScrollView {
+             ScrollView {
                 VStack(spacing: 16) {
                     ForEach(items) { item in
-                        DashboardCard(
-                            title: item.name,
-                            qty: item.total,
-                            description: item.description
-                        )
+                        DashboardCard(item: item)
                     }
                 }
                 .padding()
@@ -56,75 +52,108 @@ struct DashboardView: View {
     }
     
     func fetchItems() {
-        guard let url = URL(string: scriptUrl) else { return }
         isLoading = true
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            DispatchQueue.main.async {
-                isLoading = false
-                if let error = error {
-                    print("Error fetching items: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let data = data else {
-                    print("No data received")
-                    return
-                }
-                
-                do {
-                    let decodedItems = try JSONDecoder().decode([DashboardItem].self, from: data)
-                    self.items = decodedItems
-                } catch {
-                    print("Failed to decode JSON: \(error)")
+        let db = Database.database().reference() // For Realtime Database
+        // let db = Firestore.firestore() // if Firestore
+
+        db.child("items").observeSingleEvent(of: .value) { snapshot in
+            var fetchedItems: [DashboardItem] = []
+
+            for case let child as DataSnapshot in snapshot.children {
+                if let dict = child.value as? [String: Any],
+                   let name = dict["name"] as? String,
+                   let description = dict["description"] as? String,
+                   let normal = dict["normal"] as? Int,
+                   let damaged = dict["damaged"] as? Int,
+                   let missing = dict["missing"] as? Int,
+                   let imageBase64 = dict["image"] as? String {
+                    
+                    let item = DashboardItem(
+                        name: name,
+                        description: description,
+                        normal: normal,
+                        damaged: damaged,
+                        missing: missing,
+                        imageBase64: imageBase64
+                    )
+                    fetchedItems.append(item)
                 }
             }
-        }.resume()
+
+            DispatchQueue.main.async {
+                self.items = fetchedItems
+                self.isLoading = false
+            }
+        }
     }
 }
 
-struct DashboardItem: Codable, Identifiable {
-    var id: UUID = UUID() // local ID for SwiftUI
+struct DashboardItem: Identifiable {
+    let id = UUID()
     var name: String
     var description: String
-    var total: Int
+    var normal: Int
+    var damaged: Int
+    var missing: Int
+    var imageBase64: String
 
-    enum CodingKeys: String, CodingKey {
-        case name
-        case description
-        case total
+    var total: Int {
+        normal + damaged + missing
+    }
+
+    var uiImage: UIImage? {
+        if let data = Data(base64Encoded: imageBase64),
+           let image = UIImage(data: data) {
+            return image
+        }
+        return nil
     }
 }
 
 struct DashboardCard: View {
-    var title: String
-    var qty: Int
-    var description: String
-    
+    var item: DashboardItem
+
     var body: some View {
         HStack {
-            ZStack {
+            if let uiImage = item.uiImage {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipped()
+                    .cornerRadius(8)
+                    .padding(.leading, 8)
+            } else {
                 Rectangle()
                     .fill(Color.brown)
                     .frame(width: 60, height: 60)
                     .cornerRadius(8)
                     .padding(.leading, 8)
-                Text("Image")
-                    .foregroundColor(.black)
-                    .font(.caption)
+                    .overlay(
+                        Text("No Image")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                    )
             }
-            VStack(alignment: .leading) {
-                Text(title)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.name)
                     .font(.headline)
-                Text("Qty: \(qty)")
+                Text("Total: \(item.total)")
                     .font(.subheadline)
-                Text(description)
+                Text(item.description)
                     .font(.subheadline)
+                HStack {
+                    Text("Normal: \(item.normal)")
+                    Text("Damaged: \(item.damaged)")
+                    Text("Missing: \(item.missing)")
+                }
+                .font(.caption)
             }
             .padding(.leading, 8)
-            
+
             Spacer()
-            
+
             Image(systemName: "ellipsis")
                 .rotationEffect(.degrees(90))
                 .padding(.trailing, 8)
