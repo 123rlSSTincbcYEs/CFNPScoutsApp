@@ -928,6 +928,18 @@ fun Settings(navController: NavController) {
         }
 
         Text(
+                text = "Contact Us/Tech Support",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier
+            .padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "codefornonprofits@gmail.com",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+        Text(
             text = "Acknowledgements",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
@@ -935,7 +947,7 @@ fun Settings(navController: NavController) {
         )
 
         Text(
-            text = "This App IS Made By CFNP(Code For Non Profits)",
+            text = "This App IS Made By CFNP(Code For Non Profits) In Partnership With SST SCouts",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 32.dp)
         )
