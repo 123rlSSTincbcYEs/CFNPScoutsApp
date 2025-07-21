@@ -112,12 +112,12 @@ struct AddItemView: View {
         
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
-            URLQueryItem(name: "name", value: name),
-            URLQueryItem(name: "description", value: description),
-            URLQueryItem(name: "normal", value: normalCount),
-            URLQueryItem(name: "missing", value: missingCount),
-            URLQueryItem(name: "damaged", value: damagedCount),
-            URLQueryItem(name: "total", value: "\(total)")
+            URLQueryItem(name: "Name", value: name),
+            URLQueryItem(name: "Description", value: description),
+            URLQueryItem(name: "Normal", value: normalCount),
+            URLQueryItem(name: "Missing", value: missingCount),
+            URLQueryItem(name: "Damaged", value: damagedCount),
+            URLQueryItem(name: "ImageBase64", value: "\(total)")
         ]
         
         var request = URLRequest(url: components.url!)
