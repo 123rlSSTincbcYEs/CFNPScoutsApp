@@ -85,8 +85,12 @@ import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
@@ -94,6 +98,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarDefaults
@@ -116,6 +121,7 @@ val colourButton = Color(0xFF2E8B57)
 val colourBackground = Color(0xFFF3F1ED)
 val colourSecondary = Color(0xFFD2B48C)
 val colourSecondaryText = Color(0xFF5D5D5D)
+val colourError = Color(0xFFC62828)
 val db = Firebase.firestore
 val scriptUrl = "https://script.google.com/macros/s/AKfycbzOY9i7u072jGU0H5ECJ9Nvaud1lnfZ-L1r2ex63PasYMm_ZLQhiFgtYXvRR7fEaS7Zmw/exec"
 var currentItem: Map<String, Any>? = null
@@ -308,6 +314,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var missing by remember { mutableIntStateOf(0) }
     var bitmapImage: Bitmap? = null
     val context = LocalContext.current
+    imageUrl = ""
 
     LaunchedEffect(edit) {
         if (edit == true && currentItem != null) {
@@ -325,7 +332,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(8.dp)
             .background(colourBackground),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -736,8 +743,7 @@ fun ViewItemUi(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .background(colourBackground),
+            .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -893,7 +899,97 @@ fun LoadImage(bitmapImage: Bitmap? = null) {
 
 @Composable
 fun Notes(navController: NavController) {
+    var content by remember { mutableStateOf("") }
+    var saveStatus by remember { mutableStateOf("Saved") }
+    var isInitialized by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            val snapshot = db.collection("users").document(uid).get().await()
+            if (snapshot.exists()) {
+                content = snapshot.getString("content") ?: ""
+            }
+        }
+        isInitialized = true
+    }
+
+    LaunchedEffect(content) {
+        Log.d("Notes", "Content changed: $content")
+        if (!isInitialized) return@LaunchedEffect
+        saveStatus = "Not Saved"
+        delay(1000)
+        val uid = auth.currentUser?.uid
+        Log.d("Notes", "UID: $uid")
+        if (uid != null) {
+            db.collection("users").document(uid)
+                .update("content", content)
+                .addOnSuccessListener { saveStatus = "Saved" }
+                .addOnFailureListener { saveStatus = "Save Failed" }
+        }
+    }
+
+    Column {
+        Spacer(modifier = Modifier.height(40.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(10.dp)
+        ) {
+            Text(
+                text = "Notes",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+                    .align(Alignment.Center)
+            )
+
+            Icon(
+                imageVector = Icons.Default.ArrowBackIosNew,
+                contentDescription = "Back",
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 8.dp)
+                    .size(30.dp)
+                    .clickable { navController.navigate("dashboard") },
+            )
+        }
+
+        OutlinedTextField(
+            value = content,
+            onValueChange = { content = it },
+            label = { Text("Notes") },
+            textStyle = TextStyle(fontSize = 14.sp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = colourSecondary,
+                unfocusedContainerColor = colourSecondary,
+                focusedTextColor = colourSecondaryText,
+                unfocusedTextColor = colourSecondaryText,
+                focusedBorderColor = colourSecondaryText,
+                unfocusedBorderColor = colourSecondaryText,
+                focusedLabelColor = colourSecondaryText,
+                unfocusedLabelColor = colourSecondaryText,
+                cursorColor = colourSecondaryText,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+        )
+        Text(
+            text = saveStatus,
+            fontSize = 12.sp,
+            color = when (saveStatus) {
+                "Saved" -> colourButton
+                "Not Saved" -> colourSecondaryText
+                "Save Failed" -> Color.Red
+                else -> Color.Unspecified
+            },
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .align(alignment = Alignment.Start)
+        )
+    }
 }
 
 @Composable
@@ -952,6 +1048,7 @@ fun Settings(navController: NavController) {
                     .clickable { navController.navigate("dashboard") },
             )
         }
+
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -1016,10 +1113,7 @@ fun Settings(navController: NavController) {
 
         Button(
             onClick = {
-                auth.signOut()
-                navController.navigate("login") {
-                    popUpTo("settings") { inclusive = true }
-                }
+                navController.navigate("notes")
             },
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = colourButton,
@@ -1032,6 +1126,29 @@ fun Settings(navController: NavController) {
                 .height(56.dp),
             shape = RoundedCornerShape(30),
         ) {
+            Icon(Icons.AutoMirrored.Filled.StickyNote2, contentDescription = "Notes")
+            Text("Notes")
+        }
+
+        Button(
+            onClick = {
+                auth.signOut()
+                navController.navigate("login") {
+                    popUpTo("settings") { inclusive = true }
+                }
+            },
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = colourError,
+                contentColor = colourBackground
+            ),
+            modifier = Modifier
+                .padding(14.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(30),
+        ) {
+            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
             Text("Logout")
         }
     }

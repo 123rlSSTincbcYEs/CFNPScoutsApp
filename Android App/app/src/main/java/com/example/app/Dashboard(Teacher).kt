@@ -87,11 +87,11 @@ fun DashboardTApp(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(20.dp)
             .background(colourBackground),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(34.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,8 +125,7 @@ fun DashboardTApp(navController: NavController) {
                         .weight(1f)
                         .fillMaxWidth()
                         .background(colourSecondary, shape = RoundedCornerShape(12.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(12.dp))
-                        .padding(8.dp),
+                        .border(2.dp, Color.White, RoundedCornerShape(12.dp)),
                 ) {
                     if (loading) {
                         Box(
