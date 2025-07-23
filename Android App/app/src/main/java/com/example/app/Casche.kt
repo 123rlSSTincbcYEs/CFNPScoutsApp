@@ -419,37 +419,6 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                 .height(120.dp)
                         )
                     }
-
-//                    Column(
-//                        modifier = Modifier
-//                            .weight(2f)
-//                            .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
-//                            .padding(8.dp),
-//                        horizontalAlignment = Alignment.Start
-//                    ) {
-//                        Text(
-//                            "Status",
-//                            color = colourSecondaryText,
-//                            fontSize = 18.sp,
-//                            fontWeight = FontWeight.Bold,
-//                            textAlign = TextAlign.Center
-//                        )
-//                        Spacer(modifier = Modifier.height(8.dp))
-//                        Text("Total Qty: $quantity", color = colourSecondaryText, fontSize = 14.sp)
-//                        Text("Normal: $normal", color = Color(0xFF2e8b57), fontSize = 13.sp)
-//                        Text("Damaged: $damaged", color = Color(0xFFaf2522), fontSize = 13.sp)
-//                        Text("Missing: $missing", color = Color(0xFFaf2522), fontSize = 13.sp)
-//
-//                        Spacer(modifier = Modifier.height(16.dp))
-//
-//                        FilledTonalButton(
-//                            onClick = { TODO() },
-//                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
-//                            shape = RoundedCornerShape(20),
-//                        ) {
-//                            Text("Edit", color = Color.White, fontSize = 12.sp)
-//                        }
-//                    }
                 }
             }
 
@@ -488,9 +457,15 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                         val bitmap = BitmapFactory.decodeStream(inputStream)
                                         if (bitmap != null) {
                                             ByteArrayOutputStream().use { outputStream ->
-                                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                                                bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
                                                 val byteArray = outputStream.toByteArray()
-                                                Base64.encodeToString(byteArray, Base64.NO_WRAP)
+                                                val maxSizeBytes = 300 * 1024
+                                                if (byteArray.size > maxSizeBytes) {
+                                                    Log.w("ImageEncoding", "Image too large: ${byteArray.size} bytes")
+                                                    null
+                                                } else {
+                                                    Base64.encodeToString(byteArray, Base64.NO_WRAP)
+                                                }
                                             }
                                         } else {
                                             null
@@ -500,7 +475,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                     e.printStackTrace()
                                     null
                                 }
-                            }.toString()
+                            }
 
                             fun saveToFirestore(imageBase64: String?) {
                                 val item = InventoryItem(
@@ -839,13 +814,14 @@ fun triggerSheetSync(scriptUrl: String) {
 
 @Composable
 fun ImagePickerBox(base64image: String) {
+    var bitmapImage by remember(base64image) { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
 
-    val bitmapImage = remember(base64image) {
-        if (imageUrl == null && base64image.isNotEmpty()) {
-            base64ToBitmap(base64image)
-        } else null
+    LaunchedEffect(base64image) {
+        bitmapImage = base64ToBitmap(base64image)
     }
+
+    Log.d("ImagePickerBox", "BitmapImage: $bitmapImage")
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -869,7 +845,8 @@ fun ImagePickerBox(base64image: String) {
 
 @Composable
 fun LoadImage(bitmapImage: Bitmap? = null) {
-    if (imageUrl != null) {
+    Log.d("LoadImage", "Loading image with URL: $bitmapImage")
+    if (!imageUrl.isNullOrBlank()) {
         Image(
             painter = rememberAsyncImagePainter(imageUrl),
             contentDescription = "Selected Image",
@@ -878,6 +855,7 @@ fun LoadImage(bitmapImage: Bitmap? = null) {
                 .clip(RoundedCornerShape(12.dp)),
             contentScale = ContentScale.Crop
         )
+        Log.d("LoadImage", "Image loaded from URL: $imageUrl")
     } else if (bitmapImage != null) {
         Image(
             painter = BitmapPainter(bitmapImage.asImageBitmap()),
@@ -887,6 +865,7 @@ fun LoadImage(bitmapImage: Bitmap? = null) {
                 .clip(RoundedCornerShape(12.dp)),
             contentScale = ContentScale.Crop
         )
+        Log.d("LoadImage", "Image loaded from bitmap $bitmapImage")
     } else {
         Icon(
             imageVector = Icons.Default.Add,
@@ -1155,16 +1134,15 @@ fun Settings(navController: NavController) {
 }
 
 fun base64ToBitmap(base64Str: String): Bitmap? {
-    var decodedImage: Bitmap? = null
-    try {
+    return try {
         val imageBytes = Base64.decode(base64Str, Base64.DEFAULT)
-        decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
     } catch (e: IllegalArgumentException) {
         e.printStackTrace()
         null
+    }.also {
+        Log.d("base64ToBitmap", "decodedImage: $it")
     }
-    Log.d("base64ToBitmap", "decodedImage: $decodedImage")
-    return decodedImage
 }
 
 data class InventoryItem(
