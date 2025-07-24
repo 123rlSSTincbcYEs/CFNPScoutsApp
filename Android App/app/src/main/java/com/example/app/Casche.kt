@@ -116,6 +116,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.FileOutputStream
+import com.yalantis.ucrop.UCrop
 
 val colourButton = Color(0xFF2E8B57)
 val colourBackground = Color(0xFFF3F1ED)
@@ -312,7 +313,6 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var normal by remember { mutableIntStateOf(0) }
     var damaged by remember { mutableIntStateOf(0) }
     var missing by remember { mutableIntStateOf(0) }
-    var bitmapImage: Bitmap? = null
     val context = LocalContext.current
     imageUrl = ""
 
@@ -351,7 +351,9 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            ImagePickerBox(base64image)
+            ImagePickerBox(base64image = base64image) { croppedBase64 ->
+                base64image = croppedBase64
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -446,37 +448,10 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
 
                 FilledTonalButton(
                     onClick = {
+                        Log.d("NewItemUi", "ImageBase64: $base64image")
                         if (itemName.isEmpty() || itemDescription.isEmpty() || normal + damaged + missing == 0) {
                             Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_LONG).show()
                         } else {
-                            val selectedImageUri: Uri? = imageUrl?.toUri()
-
-                            val imageBase64: String? = selectedImageUri?.let { uri ->
-                                try {
-                                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                        val bitmap = BitmapFactory.decodeStream(inputStream)
-                                        if (bitmap != null) {
-                                            ByteArrayOutputStream().use { outputStream ->
-                                                bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
-                                                val byteArray = outputStream.toByteArray()
-                                                val maxSizeBytes = 300 * 1024
-                                                if (byteArray.size > maxSizeBytes) {
-                                                    Log.w("ImageEncoding", "Image too large: ${byteArray.size} bytes")
-                                                    null
-                                                } else {
-                                                    Base64.encodeToString(byteArray, Base64.NO_WRAP)
-                                                }
-                                            }
-                                        } else {
-                                            null
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                    null
-                                }
-                            }
-
                             fun saveToFirestore(imageBase64: String?) {
                                 val item = InventoryItem(
                                     Name = itemName,
@@ -500,6 +475,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                                 navController.navigate("dashboard")
                                             }
                                             .addOnFailureListener { e ->
+                                                Log.d("NewItemUi", "Failed to update item: ${e.localizedMessage}")
                                                 Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                             }
                                     } else {
@@ -520,7 +496,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                 imageUrl = null
                             }
 
-                            saveToFirestore(imageBase64)
+                            saveToFirestore(imageBase64 = base64image)
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
@@ -813,33 +789,76 @@ fun triggerSheetSync(scriptUrl: String) {
 }
 
 @Composable
-fun ImagePickerBox(base64image: String) {
-    var bitmapImage by remember(base64image) { mutableStateOf<Bitmap?>(null) }
+fun ImagePickerBox(
+    base64image: String,
+    onImageCropped: (String) -> Unit
+) {
     val context = LocalContext.current
 
-    LaunchedEffect(base64image) {
-        bitmapImage = base64ToBitmap(base64image)
+    var bitmapImage by remember(base64image) {
+        mutableStateOf(base64ToBitmap(base64image))
     }
 
-    Log.d("ImagePickerBox", "BitmapImage: $bitmapImage")
+    val cropLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val resultUri = UCrop.getOutput(result.data ?: return@rememberLauncherForActivityResult)
+        if (resultUri != null) {
+            context.contentResolver.openInputStream(resultUri)?.use { inputStream ->
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                bitmap?.let {
+                    val outputStream = ByteArrayOutputStream()
+                    it.compress(Bitmap.CompressFormat.WEBP, 40, outputStream)
+                    val bytes = outputStream.toByteArray()
 
-    val launcher = rememberLauncherForActivityResult(
+                    if (bytes.size > 300 * 1024) {
+                        Toast.makeText(context, "Image too large (>300KB). Please crop smaller.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        bitmapImage = it
+                        val base64String = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        onImageCropped(base64String)
+                    }
+                }
+            }
+        }
+    }
+
+    val pickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        imageUrl = uri?.toString()
-        Log.d("ImagePickerBox", "Image selected: $imageUrl")
+        uri?.let {
+            val destinationUri = Uri.fromFile(File(context.cacheDir, "ucrop_${System.currentTimeMillis()}.jpg"))
+            val options = UCrop.Options().apply {
+                setFreeStyleCropEnabled(true)
+                setCompressionQuality(60)
+                setToolbarTitle("Crop Image")
+            }
+            val uCrop = UCrop.of(it, destinationUri).withOptions(options)
+            cropLauncher.launch(uCrop.getIntent(context))
+        }
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(280.dp)
             .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
             .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
-            .clickable { launcher.launch("image/*") },
+            .clickable { pickLauncher.launch("image/*") },
         contentAlignment = Alignment.Center
     ) {
-        LoadImage(bitmapImage)
+        if (bitmapImage != null) {
+            Image(
+                bitmap = bitmapImage!!.asImageBitmap(),
+                contentDescription = "Selected Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp),
+                contentScale = ContentScale.Fit
+            )
+        } else {
+            Icon(Icons.Default.Add, contentDescription = "Add Image")
+        }
     }
 }
 
