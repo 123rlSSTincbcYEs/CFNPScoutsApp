@@ -85,6 +85,7 @@ import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -829,11 +830,15 @@ fun ImagePickerBox(
         uri?.let {
             val destinationUri = Uri.fromFile(File(context.cacheDir, "ucrop_${System.currentTimeMillis()}.jpg"))
             val options = UCrop.Options().apply {
-                setFreeStyleCropEnabled(true)
+                setFreeStyleCropEnabled(false)
                 setCompressionQuality(60)
                 setToolbarTitle("Crop Image")
             }
-            val uCrop = UCrop.of(it, destinationUri).withOptions(options)
+
+            val uCrop = UCrop.of(it, destinationUri)
+                .withOptions(options)
+                .withAspectRatio(1f, 1f)
+
             cropLauncher.launch(uCrop.getIntent(context))
         }
     }
@@ -841,9 +846,10 @@ fun ImagePickerBox(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
-            .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
-            .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
+            .aspectRatio(1f / 1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(colourButton)
+            .border(3.dp, Color.Black, RoundedCornerShape(12.dp))
             .clickable { pickLauncher.launch("image/*") },
         contentAlignment = Alignment.Center
     ) {
@@ -851,9 +857,7 @@ fun ImagePickerBox(
             Image(
                 bitmap = bitmapImage!!.asImageBitmap(),
                 contentDescription = "Selected Image",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(280.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit
             )
         } else {
