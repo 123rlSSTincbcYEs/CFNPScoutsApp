@@ -56,6 +56,9 @@ import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
@@ -84,130 +87,130 @@ fun DashboardTApp(navController: NavController) {
             }
         )
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .background(colourBackground),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(34.dp))
-        Box(
+
+    Scaffold(
+        bottomBar = { BottomNavBar(navController) },
+        containerColor = colourBackground
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Dashboard",
-                fontSize = 40.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
+            Spacer(modifier = Modifier.height(34.dp))
 
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
+            Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 8.dp)
-                    .size(30.dp)
-                    .clickable { navController.navigate("settings") }
-            )
-        }
-
-        when {
-            errorMessage != null -> {
-                Text(text = "Error: $errorMessage")
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text(
+                    text = "Dashboard",
+                    fontSize = 40.sp,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
 
-            else -> {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .background(colourSecondary, shape = RoundedCornerShape(12.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(12.dp)),
-                ) {
-                    if (loading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .zIndex(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = Color.White)
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(items) { item ->
-                                val name = item["name"] as? String ?: ""
-                                val description = item["description"] as? String ?: ""
-                                val quantityMap = item["quantity"] as? Map<*, *>
-                                val normal = (quantityMap?.get("normal") as? Long)?.toInt() ?: 0
-                                val damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
-                                val missing = (quantityMap?.get("missing") as? Long)?.toInt() ?: 0
-                                val quantity = normal + damaged + missing
-                                val dueDate = item["Due Date"] as? com.google.firebase.Timestamp
-                                val days = dueDate?.toDate()?.let { daysUntil(it) }
-                                val id = item["id"] as? String ?: ""
-                                val imageBase64 = item["imageBase64"] as? String
+            when {
+                errorMessage != null -> {
+                    Text(text = "Error: $errorMessage")
+                }
 
-                                ItemUI(
-                                    name = name,
-                                    description = description,
-                                    quantity = quantity,
-                                    dd = days,
-                                    navController = navController,
-                                    id = id,
-                                    imageBase64 = imageBase64,
-                                    fullItem = item,
-                                )
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(colourSecondary, shape = RoundedCornerShape(12.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(12.dp)),
+                    ) {
+                        if (loading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .zIndex(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color.White)
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(items) { item ->
+                                    val name = item["name"] as? String ?: ""
+                                    val description = item["description"] as? String ?: ""
+                                    val quantityMap = item["quantity"] as? Map<*, *>
+                                    val normal = (quantityMap?.get("normal") as? Long)?.toInt() ?: 0
+                                    val damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
+                                    val missing = (quantityMap?.get("missing") as? Long)?.toInt() ?: 0
+                                    val quantity = normal + damaged + missing
+                                    val dueDate = item["Due Date"] as? com.google.firebase.Timestamp
+                                    val days = dueDate?.toDate()?.let { daysUntil(it) }
+                                    val id = item["id"] as? String ?: ""
+                                    val imageBase64 = item["imageBase64"] as? String
+
+                                    ItemUI(
+                                        name = name,
+                                        description = description,
+                                        quantity = quantity,
+                                        dd = days,
+                                        navController = navController,
+                                        id = id,
+                                        imageBase64 = imageBase64,
+                                        fullItem = item,
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                Button(
-                    onClick = {
-                        refresh = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Reload Items")
-                    Text(text = "Reload", fontSize = 16.sp)
-                }
+                    Button(
+                        onClick = {
+                            refresh = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Reload Items")
+                        Text(text = "Reload", fontSize = 16.sp)
+                    }
 
-                Button(
-                    onClick = { navController.navigate("newItem/false") },
-                    colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Item")
-                    Text(text = "Add Item", fontSize = 16.sp)
-                }
-                LaunchedEffect(refresh) {
-                    if (refresh == true) {
-                        loading = true
-                        kotlinx.coroutines.delay(1000)
-                        getItemsFromFirestore(
-                            collectionName = "items",
-                            onSuccess = { fetchedItems ->
-                                items = fetchedItems
-                                loading = false
-                                refresh = false
-                            },
-                            onFailure = { e ->
-                                errorMessage = e.message
-                                loading = false
-                                refresh = false
-                            }
-                        )
+                    Button(
+                        onClick = { navController.navigate("newItem/false") },
+                        colors = ButtonDefaults.buttonColors(containerColor = colourSecondary),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Item")
+                        Text(text = "Add Item", fontSize = 16.sp)
+                    }
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            loading = true
+                            kotlinx.coroutines.delay(1000)
+                            getItemsFromFirestore(
+                                collectionName = "items",
+                                onSuccess = { fetchedItems ->
+                                    items = fetchedItems
+                                    loading = false
+                                    refresh = false
+                                },
+                                onFailure = { e ->
+                                    errorMessage = e.message
+                                    loading = false
+                                    refresh = false
+                                }
+                            )
+                        }
                     }
                 }
             }

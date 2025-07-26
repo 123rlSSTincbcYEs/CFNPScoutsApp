@@ -86,6 +86,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -102,7 +103,9 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -113,6 +116,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.compose.ComposeNavigator.Destination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.app.colourBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import java.io.File
@@ -848,8 +852,8 @@ fun ImagePickerBox(
             .fillMaxWidth()
             .aspectRatio(1f / 1f)
             .clip(RoundedCornerShape(12.dp))
-            .background(colourButton)
-            .border(3.dp, Color.Black, RoundedCornerShape(12.dp))
+            .background(colourSecondary)
+            .border(3.dp, colourButton, RoundedCornerShape(12.dp))
             .clickable { pickLauncher.launch("image/*") },
         contentAlignment = Alignment.Center
     ) {
@@ -861,7 +865,7 @@ fun ImagePickerBox(
                 contentScale = ContentScale.Fit
             )
         } else {
-            Icon(Icons.Default.Add, contentDescription = "Add Image")
+            Icon(Icons.Default.Add, contentDescription = "Add Image", Modifier.size(40.dp))
         }
     }
 }
@@ -931,227 +935,204 @@ fun Notes(navController: NavController) {
         }
     }
 
-    Column {
-        Spacer(modifier = Modifier.height(40.dp))
-        Box(
+    Scaffold(
+        bottomBar = { BottomNavBar(navController) },
+        containerColor = colourBackground
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(10.dp)
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+                .fillMaxSize()
         ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
             Text(
                 text = "Notes",
                 style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = 40.sp,
                 modifier = Modifier
                     .padding(bottom = 24.dp)
-                    .align(Alignment.Center)
+                    .align(Alignment.CenterHorizontally)
             )
 
-            Icon(
-                imageVector = Icons.Default.ArrowBackIosNew,
-                contentDescription = "Back",
+            OutlinedTextField(
+                value = content,
+                onValueChange = { content = it },
+                label = { Text("Notes") },
+                textStyle = TextStyle(fontSize = 14.sp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colourSecondary,
+                    unfocusedContainerColor = colourSecondary,
+                    focusedTextColor = colourSecondaryText,
+                    unfocusedTextColor = colourSecondaryText,
+                    focusedBorderColor = colourSecondaryText,
+                    unfocusedBorderColor = colourSecondaryText,
+                    focusedLabelColor = colourSecondaryText,
+                    unfocusedLabelColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText,
+                ),
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 8.dp)
-                    .size(30.dp)
-                    .clickable { navController.navigate("dashboard") },
+                    .fillMaxWidth()
+                    .height(500.dp)
             )
-        }
 
-        OutlinedTextField(
-            value = content,
-            onValueChange = { content = it },
-            label = { Text("Notes") },
-            textStyle = TextStyle(fontSize = 14.sp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = colourSecondary,
-                unfocusedContainerColor = colourSecondary,
-                focusedTextColor = colourSecondaryText,
-                unfocusedTextColor = colourSecondaryText,
-                focusedBorderColor = colourSecondaryText,
-                unfocusedBorderColor = colourSecondaryText,
-                focusedLabelColor = colourSecondaryText,
-                unfocusedLabelColor = colourSecondaryText,
-                cursorColor = colourSecondaryText,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(500.dp)
-        )
-        Text(
-            text = saveStatus,
-            fontSize = 12.sp,
-            color = when (saveStatus) {
-                "Saved" -> colourButton
-                "Not Saved" -> colourSecondaryText
-                "Save Failed" -> Color.Red
-                else -> Color.Unspecified
-            },
-            modifier = Modifier
-                .padding(top = 4.dp)
-                .align(alignment = Alignment.Start)
-        )
+            Text(
+                text = saveStatus,
+                fontSize = 12.sp,
+                color = when (saveStatus) {
+                    "Saved" -> colourButton
+                    "Not Saved" -> colourSecondaryText
+                    "Save Failed" -> Color.Red
+                    else -> Color.Unspecified
+                },
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .align(Alignment.Start)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
 fun Settings(navController: NavController) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-    ) {
-        var name by remember { mutableStateOf("") }
-        var saveStatus by remember { mutableStateOf("Saved") }
+    Scaffold(
+        bottomBar = { BottomNavBar(navController) },
+        containerColor = colourBackground
+    ) { innerPadding ->
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            var name by remember { mutableStateOf("") }
+            var saveStatus by remember { mutableStateOf("Saved") }
 
-        LaunchedEffect(Unit) {
-            val uid = auth.currentUser?.uid
-            if (uid != null) {
-                val snapshot = db.collection("users").document(uid).get().await()
-                if (snapshot.exists()) {
-                    name = snapshot.getString("name") ?: ""
+            LaunchedEffect(Unit) {
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    val snapshot = db.collection("users").document(uid).get().await()
+                    if (snapshot.exists()) {
+                        name = snapshot.getString("name") ?: ""
+                    }
                 }
             }
-        }
 
-        LaunchedEffect(name) {
-            saveStatus = "Not Saved"
-            delay(1000)
-            val uid = auth.currentUser?.uid
-            if (uid != null) {
-                db.collection("users").document(uid)
-                    .update("name", name)
-                    .addOnSuccessListener { saveStatus = "Saved" }
-                    .addOnFailureListener { saveStatus = "Save Failed" }
+            LaunchedEffect(name) {
+                saveStatus = "Not Saved"
+                delay(1000)
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    db.collection("users").document(uid)
+                        .update("name", name)
+                        .addOnSuccessListener { saveStatus = "Saved" }
+                        .addOnFailureListener { saveStatus = "Save Failed" }
+                }
             }
-        }
-        Spacer(modifier = Modifier.height(40.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-        ) {
+
+            Spacer(modifier = Modifier.height(40.dp))
+
             Text(
                 text = "Settings",
                 style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = 40.sp,
                 modifier = Modifier
                     .padding(bottom = 24.dp)
-                    .align(Alignment.Center)
+                    .align(Alignment.CenterHorizontally)
             )
 
-            Icon(
-                imageVector = Icons.Default.ArrowBackIosNew,
-                contentDescription = "Back",
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 14.sp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colourSecondary,
+                    unfocusedContainerColor = colourSecondary,
+                    focusedTextColor = colourSecondaryText,
+                    unfocusedTextColor = colourSecondaryText,
+                    focusedBorderColor = colourSecondaryText,
+                    unfocusedBorderColor = colourSecondaryText,
+                    focusedLabelColor = colourSecondaryText,
+                    unfocusedLabelColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = saveStatus,
+                fontSize = 12.sp,
+                color = when (saveStatus) {
+                    "Saved" -> colourButton
+                    "Not Saved" -> colourSecondaryText
+                    "Save Failed" -> Color.Red
+                    else -> Color.Unspecified
+                },
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 8.dp)
-                    .size(30.dp)
-                    .clickable { navController.navigate("dashboard") },
+                    .padding(top = 4.dp)
+                    .align(alignment = Alignment.Start)
             )
-        }
 
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Name") },
-            singleLine = true,
-            textStyle = TextStyle(fontSize = 14.sp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = colourSecondary,
-                unfocusedContainerColor = colourSecondary,
-                focusedTextColor = colourSecondaryText,
-                unfocusedTextColor = colourSecondaryText,
-                focusedBorderColor = colourSecondaryText,
-                unfocusedBorderColor = colourSecondaryText,
-                focusedLabelColor = colourSecondaryText,
-                unfocusedLabelColor = colourSecondaryText,
-                cursorColor = colourSecondaryText,
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Text(
-            text = saveStatus,
-            fontSize = 12.sp,
-            color = when (saveStatus) {
-                "Saved" -> colourButton
-                "Not Saved" -> colourSecondaryText
-                "Save Failed" -> Color.Red
-                else -> Color.Unspecified
-            },
-            modifier = Modifier
-                .padding(top = 4.dp)
-                .align(alignment = Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
+            Spacer(modifier = Modifier.height(200.dp))
+
+            Text(
                 text = "Contact Us/Tech Support",
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .padding(bottom = 8.dp)
-        )
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-        Text(
-            text = "codefornonprofits@gmail.com",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        Spacer(modifier = Modifier.height(240.dp))
-        Text(
-            text = "Acknowledgements",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .padding(bottom = 8.dp)
-        )
+            Text(
+                text = "codefornonprofits@gmail.com",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
 
-        Text(
-            text = "This App IS Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
+            Spacer(modifier = Modifier.height(20.dp))
 
-        Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "Acknowledgements",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-        Button(
-            onClick = {
-                navController.navigate("notes")
-            },
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = colourButton,
-                contentColor = colourBackground
-            ),
-            modifier = Modifier
-                .padding(14.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(30),
-        ) {
-            Icon(Icons.AutoMirrored.Filled.StickyNote2, contentDescription = "Notes")
-            Text("Notes")
-        }
+            Text(
+                text = "This App IS Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
 
-        Button(
-            onClick = {
-                auth.signOut()
-                navController.navigate("login") {
-                    popUpTo("settings") { inclusive = true }
-                }
-            },
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = colourError,
-                contentColor = colourBackground
-            ),
-            modifier = Modifier
-                .padding(14.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(30),
-        ) {
-            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
-            Text("Logout")
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = {
+                    auth.signOut()
+                    navController.navigate("login") {
+                        popUpTo("settings") { inclusive = true }
+                    }
+                },
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colourError,
+                    contentColor = colourBackground
+                ),
+                modifier = Modifier
+                    .padding(14.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(30),
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                Text("Logout")
+            }
         }
     }
 }
@@ -1165,6 +1146,52 @@ fun base64ToBitmap(base64Str: String): Bitmap? {
         null
     }.also {
         Log.d("base64ToBitmap", "decodedImage: $it")
+    }
+}
+
+@Composable
+fun BottomNavBar(navController: NavController) {
+    val currentDestination = navController
+        .currentBackStackEntryAsState().value?.destination
+
+    NavigationBar(
+        containerColor = colourBackground,
+        contentColor = colourSecondaryText
+    ) {
+        BottomNavItems.forEach { (label, icon, route) ->
+            val selected = currentDestination?.route == route
+
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                icon = {
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        tint = if (selected) colourButton else colourSecondaryText
+                    )
+                },
+                label = {
+                    Text(
+                        label,
+                        color = if (selected) colourButton else colourSecondaryText
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = colourButton,
+                    unselectedIconColor = colourSecondaryText,
+                    selectedTextColor = colourButton,
+                    unselectedTextColor = colourSecondaryText,
+                    indicatorColor = colourSecondary.copy(alpha = 0.3f)
+                )
+            )
+        }
     }
 }
 
@@ -1188,22 +1215,20 @@ data class BottomNavItem(
     val route:String,
 )
 
-object Constants {
-    val BottomNavItems = listOf(
-        BottomNavItem(
-            label = "Home",
-            icon = Icons.Filled.Home,
-            route = "dashboard"
-        ),
-        BottomNavItem(
-            label = "Notes",
-            icon = Icons.Filled.Notes,
-            route = "notes"
-        ),
-        BottomNavItem(
-            label = "Settings",
-            icon = Icons.Filled.Settings,
-            route = "settings"
-        )
+val BottomNavItems = listOf(
+    BottomNavItem(
+        label = "Home",
+        icon = Icons.Filled.Home,
+        route = "dashboard"
+    ),
+    BottomNavItem(
+        label = "Notes",
+        icon = Icons.Filled.Notes,
+        route = "notes"
+    ),
+    BottomNavItem(
+        label = "Settings",
+        icon = Icons.Filled.Settings,
+        route = "settings"
     )
-}
+)
