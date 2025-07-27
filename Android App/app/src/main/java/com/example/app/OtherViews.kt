@@ -1,6 +1,5 @@
 package com.example.app
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -29,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
@@ -81,84 +79,38 @@ import java.net.URL
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.core.content.FileProvider
-import androidx.navigation.compose.ComposeNavigator.Destination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.example.app.colourBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import java.io.File
-import java.io.FileOutputStream
 import com.yalantis.ucrop.UCrop
-
-val colourButton = Color(0xFF2E8B57)
-val colourBackground = Color(0xFFF3F1ED)
-val colourSecondary = Color(0xFFD2B48C)
-val colourSecondaryText = Color(0xFF5D5D5D)
-val colourError = Color(0xFFC62828)
-val db = Firebase.firestore
-val scriptUrl = "https://script.google.com/macros/s/AKfycbzOY9i7u072jGU0H5ECJ9Nvaud1lnfZ-L1r2ex63PasYMm_ZLQhiFgtYXvRR7fEaS7Zmw/exec"
-var currentItem: Map<String, Any>? = null
-var imageUrl by mutableStateOf<String?>(null)
-var refresh by mutableStateOf(false)
-
-fun getItemsFromFirestore(
-    collectionName: String,
-    onSuccess: (List<Map<String, Any>>) -> Unit,
-    onFailure: (Exception) -> Unit
-) {
-    db.collection("items")
-        .get()
-        .addOnSuccessListener { result ->
-            val itemsList = result.documents.mapNotNull { document ->
-                val data = document.data ?: emptyMap()
-                data + ("id" to document.id)
-            }
-            onSuccess(itemsList)
-        }
-        .addOnFailureListener { exception ->
-            onFailure(exception)
-        }
-}
 
 @Composable
 fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: String?, imageBase64: String?, fullItem: Map<String, Any>?, navController: NavController) {
     var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
     var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
-    if (imageBase64 != null){
+    if (imageBase64 != null) {
         bitmapImage = base64ToBitmap(imageBase64.toString())
     }
     colourScheme = if (dd == null) {
@@ -221,9 +173,10 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                     Text(description)
                 }
 
-                Column(modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 ) {
                     Box(
                         modifier = Modifier
@@ -283,10 +236,18 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                                         .addOnSuccessListener {
                                             triggerSheetSync(scriptUrl)
                                             refresh = true
-                                            Toast.makeText(context, "Delete successful", Toast.LENGTH_LONG).show()
+                                            Toast.makeText(
+                                                context,
+                                                "Delete successful",
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                         }
                                         .addOnFailureListener {
-                                            Toast.makeText(context, "Delete failed: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+                                            Toast.makeText(
+                                                context,
+                                                "Delete failed: ${it.localizedMessage}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                         }
                                 }
                             )
@@ -296,17 +257,6 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
             }
         }
     }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-fun daysUntil(targetDate: java.util.Date): Long {
-    val localTargetDate = targetDate.toInstant()
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
-
-    val today = LocalDate.now()
-
-    return ChronoUnit.DAYS.between(today, localTargetDate)
 }
 
 @Composable
@@ -334,191 +284,189 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
         }
     }
 
-    Column(
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp)
             .background(colourBackground),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .background(colourBackground, shape = RoundedCornerShape(16.dp))
-                .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
-                .padding(16.dp),
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Add New Item",
-                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
-                color = colourSecondaryText,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .background(colourBackground, shape = RoundedCornerShape(16.dp))
+                    .border(2.dp, Color(0xFF2e8b57), RoundedCornerShape(16.dp))
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (edit == true) "Edit Item" else "Add New Item",
+                    style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+                    color = colourSecondaryText,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
 
-            ImagePickerBox(base64image = base64image) { croppedBase64 ->
-                base64image = croppedBase64
-            }
+                ImagePickerBox(base64image = base64image) { croppedBase64 ->
+                    base64image = croppedBase64
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Column() {
+                Column {
+                    Edit_Status(
+                        normal = normal,
+                        onNormalChange = { normal = it },
+                        damaged = damaged,
+                        onDamagedChange = { damaged = it },
+                        missing = missing,
+                        onMissingChange = { missing = it },
+                        true
+                    )
 
-                Edit_Status(normal = normal,
-                    onNormalChange = { normal = it },
-                    damaged = damaged,
-                    onDamagedChange = { damaged = it },
-                    missing = missing,
-                    onMissingChange = { missing = it },
-                    true)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = itemName,
+                        onValueChange = { itemName = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 14.sp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = colourSecondary,
+                            unfocusedContainerColor = colourSecondary,
+                            focusedTextColor = colourSecondaryText,
+                            unfocusedTextColor = colourSecondaryText,
+                            focusedBorderColor = colourSecondaryText,
+                            unfocusedBorderColor = colourSecondaryText,
+                            focusedLabelColor = colourSecondaryText,
+                            unfocusedLabelColor = colourSecondaryText,
+                            cursorColor = colourSecondaryText,
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = itemDescription,
+                        onValueChange = { itemDescription = it },
+                        label = { Text("Description") },
+                        textStyle = TextStyle(fontSize = 12.sp),
+                        singleLine = false,
+                        maxLines = 6,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = colourSecondary,
+                            unfocusedContainerColor = colourSecondary,
+                            focusedTextColor = colourSecondaryText,
+                            unfocusedTextColor = colourSecondaryText,
+                            focusedBorderColor = colourSecondaryText,
+                            unfocusedBorderColor = colourSecondaryText,
+                            focusedLabelColor = colourSecondaryText,
+                            unfocusedLabelColor = colourSecondaryText,
+                            cursorColor = colourSecondaryText,
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Column(
+                    FilledTonalButton(
+                        onClick = {
+                            navController.navigate("dashboard")
+                            imageUrl = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
+                        shape = RoundedCornerShape(30),
+                        border = BorderStroke(2.dp, Color.White),
                         modifier = Modifier
-                            .weight(5f)
+                            .weight(1f)
+                            .padding(end = 8.dp)
+                            .height(48.dp)
                     ) {
-                        OutlinedTextField(
-                            value = itemName,
-                            onValueChange = { itemName = it },
-                            label = { Text("Name") },
-                            singleLine = true,
-                            textStyle = TextStyle(fontSize = 14.sp),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = colourSecondary,
-                                unfocusedContainerColor = colourSecondary,
-                                focusedTextColor = colourSecondaryText,
-                                unfocusedTextColor = colourSecondaryText,
-                                focusedBorderColor = colourSecondaryText,
-                                unfocusedBorderColor = colourSecondaryText,
-                                focusedLabelColor = colourSecondaryText,
-                                unfocusedLabelColor = colourSecondaryText,
-                                cursorColor = colourSecondaryText,
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedTextField(
-                            value = itemDescription,
-                            onValueChange = { itemDescription = it },
-                            label = { Text("Description") },
-                            textStyle = TextStyle(fontSize = 12.sp),
-                            singleLine = false,
-                            maxLines = 6,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = colourSecondary,
-                                unfocusedContainerColor = colourSecondary,
-                                focusedTextColor = colourSecondaryText,
-                                unfocusedTextColor = colourSecondaryText,
-                                focusedBorderColor = colourSecondaryText,
-                                unfocusedBorderColor = colourSecondaryText,
-                                focusedLabelColor = colourSecondaryText,
-                                unfocusedLabelColor = colourSecondaryText,
-                                cursorColor = colourSecondaryText,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                        )
+                        Text("Cancel", color = Color.White, fontSize = 16.sp)
                     }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                    FilledTonalButton(
+                        onClick = {
+                            Log.d("NewItemUi", "ImageBase64: $base64image")
+                            if (itemName.isEmpty() || itemDescription.isEmpty() || normal + damaged + missing == 0) {
+                                Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_LONG).show()
+                            } else {
+                                fun saveToFirestore(imageBase64: String?) {
+                                    val item = InventoryItem(
+                                        Name = itemName,
+                                        Description = itemDescription,
+                                        Quantity = QuantityStatus(
+                                            normal = normal,
+                                            damaged = damaged,
+                                            missing = missing,
+                                            total = normal + damaged + missing
+                                        ),
+                                        ImageBase64 = imageBase64 ?: currentItem?.get("ImageBase64") as? String
+                                    )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                FilledTonalButton(
-                    onClick = {
-                        navController.navigate("dashboard")
-                        imageUrl = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
-                    shape = RoundedCornerShape(30),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp)
-                        .height(48.dp)
-                ) {
-                    Text("Cancel", color = Color.White, fontSize = 16.sp)
-                }
-
-                FilledTonalButton(
-                    onClick = {
-                        Log.d("NewItemUi", "ImageBase64: $base64image")
-                        if (itemName.isEmpty() || itemDescription.isEmpty() || normal + damaged + missing == 0) {
-                            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_LONG).show()
-                        } else {
-                            fun saveToFirestore(imageBase64: String?) {
-                                val item = InventoryItem(
-                                    Name = itemName,
-                                    Description = itemDescription,
-                                    Quantity = QuantityStatus(
-                                        normal = normal,
-                                        damaged = damaged,
-                                        missing = missing,
-                                        total = normal + damaged + missing
-                                    ),
-                                    ImageBase64 = imageBase64 ?: currentItem?.get("ImageBase64") as? String
-                                )
-
-                                if (edit == true) {
-                                    val docId = currentItem?.get("id") as? String
-                                    if (docId != null) {
-                                        db.collection("items").document(docId)
-                                            .set(item)
+                                    if (edit == true) {
+                                        val docId = currentItem?.get("id") as? String
+                                        if (docId != null) {
+                                            db.collection("items").document(docId)
+                                                .set(item)
+                                                .addOnSuccessListener {
+                                                    triggerSheetSync(scriptUrl)
+                                                    navController.navigate("dashboard")
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.d("NewItemUi", "Failed to update item: ${e.localizedMessage}")
+                                                    Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                }
+                                        } else {
+                                            Toast.makeText(context, "No document ID found", Toast.LENGTH_LONG).show()
+                                        }
+                                    } else {
+                                        db.collection("items")
+                                            .add(item)
                                             .addOnSuccessListener {
                                                 triggerSheetSync(scriptUrl)
                                                 navController.navigate("dashboard")
                                             }
                                             .addOnFailureListener { e ->
-                                                Log.d("NewItemUi", "Failed to update item: ${e.localizedMessage}")
-                                                Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                Log.d("NewItemUi", "Failed to create item: ${e.localizedMessage}")
+                                                Toast.makeText(context, "Failed to create item: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                             }
-                                    } else {
-                                        Toast.makeText(context, "No document ID found", Toast.LENGTH_LONG).show()
                                     }
-                                } else {
-                                    db.collection("items")
-                                        .add(item)
-                                        .addOnSuccessListener {
-                                            triggerSheetSync(scriptUrl)
-                                            navController.navigate("dashboard")
-                                        }
-                                        .addOnFailureListener { e ->
-                                            Log.d("NewItemUi", "Failed to create item: ${e.localizedMessage}")
-                                            Toast.makeText(context, "Failed to create item: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                                        }
+                                    imageUrl = null
                                 }
-                                imageUrl = null
-                            }
 
-                            saveToFirestore(imageBase64 = base64image)
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
-                    shape = RoundedCornerShape(30),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp)
-                        .height(48.dp)
-                ) {
-                    Text(if (edit == true) "Update" else "Create", color = Color.White, fontSize = 16.sp)
+                                saveToFirestore(imageBase64 = base64image)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
+                        shape = RoundedCornerShape(30),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp)
+                            .height(48.dp)
+                    ) {
+                        Text(if (edit == true) "Update" else "Create", color = Color.White, fontSize = 16.sp)
+                    }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun LoadingOverlay(isLoading: Boolean) {
@@ -531,35 +479,6 @@ fun LoadingOverlay(isLoading: Boolean) {
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Color.White, strokeWidth = 4.dp)
-        }
-    }
-}
-
-@Composable
-fun ErrorPopup(message: String, authStat: Boolean, onDismiss: () -> Unit) {
-    if (authStat) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .zIndex(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Default.Warning, contentDescription = "Error", tint = Color.Red, modifier = Modifier.size(128.dp))
-                Text("Error", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 32.sp)
-                Text(message, color = Color.Red, fontSize = 20.sp, textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(16.dp))
-                FilledTonalButton(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier.width(100.dp)
-                ) {
-                    Text("Dismiss", color = Color.White)
-                }
-            }
         }
     }
 }
@@ -666,11 +585,6 @@ fun Edit_Status(normal: Int, onNormalChange: (Int) -> Unit, damaged: Int, onDama
 }
 
 @Composable
-fun EditUi(navController: NavController, item: Int) {
-
-}
-
-@Composable
 fun ViewItemUi(navController: NavController) {
     var itemName by remember { mutableStateOf("") }
     var itemDescription by remember { mutableStateOf("") }
@@ -696,99 +610,92 @@ fun ViewItemUi(navController: NavController) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("View Item", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = colourSecondaryText)
-
-        Box(
+    Scaffold { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-                .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
-                .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (bitmapImage != null) {
-                Image(
-                    painter = BitmapPainter(bitmapImage!!.asImageBitmap()),
-                    contentDescription = "Decoded Base64 Image",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Block,
-                    contentDescription = "No Image",
-                    tint = Color.Black.copy(alpha = 0.5f),
-                    modifier = Modifier.size(48.dp),
-                )
+            Text(
+                "View Item",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = colourSecondaryText
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .background(Color(0xFFC3A480), RoundedCornerShape(12.dp))
+                    .border(1.dp, Color.Black, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (bitmapImage != null) {
+                    Image(
+                        painter = BitmapPainter(bitmapImage!!.asImageBitmap()),
+                        contentDescription = "Decoded Base64 Image",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Block,
+                        contentDescription = "No Image",
+                        tint = Color.Black.copy(alpha = 0.5f),
+                        modifier = Modifier.size(48.dp),
+                    )
+                }
             }
-        }
 
-        OutlinedTextField(
-            value = itemName,
-            onValueChange = {},
-            label = { Text("Item Name") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = false,
-            readOnly = true
-        )
+            OutlinedTextField(
+                value = itemName,
+                onValueChange = {},
+                label = { Text("Item Name") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = false,
+                readOnly = true
+            )
 
-        OutlinedTextField(
-            value = itemDescription,
-            onValueChange = {},
-            label = { Text("Description") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            enabled = false,
-            readOnly = true,
-            maxLines = 4
-        )
+            OutlinedTextField(
+                value = itemDescription,
+                onValueChange = {},
+                label = { Text("Description") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                enabled = false,
+                readOnly = true,
+                maxLines = 4
+            )
 
-        OutlinedTextField(
-            value = "Normal: $normal | Damaged: $damaged | Missing: $missing | Total: $quantity",
-            onValueChange = {},
-            label = { Text("Quantity Overview") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = false,
-            readOnly = true
-        )
+            OutlinedTextField(
+                value = "Normal: $normal | Damaged: $damaged | Missing: $missing | Total: $quantity",
+                onValueChange = {},
+                label = { Text("Quantity Overview") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = false,
+                readOnly = true
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        FilledTonalButton(
-            onClick = { navController.popBackStack() },
-            shape = RoundedCornerShape(30),
-            border = BorderStroke(2.dp, Color.White),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-        ) {
-            Text("Back", color = Color.White, fontSize = 16.sp)
-        }
-    }
-}
-
-fun triggerSheetSync(scriptUrl: String) {
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val url = URL(scriptUrl)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.connect()
-            val responseCode = conn.responseCode
-            Log.d("SheetSync", "Triggered Google Apps Script, response code: $responseCode")
-        } catch (e: Exception) {
-            Log.e("SheetSync", "Failed to call Apps Script: ${e.localizedMessage}")
+            FilledTonalButton(
+                onClick = { navController.popBackStack() },
+                shape = RoundedCornerShape(30),
+                border = BorderStroke(2.dp, Color.White),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+            ) {
+                Text("Back", color = Color.White, fontSize = 16.sp)
+            }
         }
     }
 }
@@ -853,7 +760,7 @@ fun ImagePickerBox(
             .aspectRatio(1f / 1f)
             .clip(RoundedCornerShape(12.dp))
             .background(colourSecondary)
-            .border(3.dp, colourButton, RoundedCornerShape(12.dp))
+            .border(2.dp, colourSecondaryText, RoundedCornerShape(12.dp))
             .clickable { pickLauncher.launch("image/*") },
         contentAlignment = Alignment.Center
     ) {
@@ -867,39 +774,6 @@ fun ImagePickerBox(
         } else {
             Icon(Icons.Default.Add, contentDescription = "Add Image", Modifier.size(40.dp))
         }
-    }
-}
-
-@Composable
-fun LoadImage(bitmapImage: Bitmap? = null) {
-    Log.d("LoadImage", "Loading image with URL: $bitmapImage")
-    if (!imageUrl.isNullOrBlank()) {
-        Image(
-            painter = rememberAsyncImagePainter(imageUrl),
-            contentDescription = "Selected Image",
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp)),
-            contentScale = ContentScale.Crop
-        )
-        Log.d("LoadImage", "Image loaded from URL: $imageUrl")
-    } else if (bitmapImage != null) {
-        Image(
-            painter = BitmapPainter(bitmapImage.asImageBitmap()),
-            contentDescription = "Decoded Base64 Image",
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp)),
-            contentScale = ContentScale.Crop
-        )
-        Log.d("LoadImage", "Image loaded from bitmap $bitmapImage")
-    } else {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = "Add Image",
-            tint = Color.Black.copy(alpha = 0.5f),
-            modifier = Modifier.size(48.dp)
-        )
     }
 }
 
@@ -1137,18 +1011,6 @@ fun Settings(navController: NavController) {
     }
 }
 
-fun base64ToBitmap(base64Str: String): Bitmap? {
-    return try {
-        val imageBytes = Base64.decode(base64Str, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-    } catch (e: IllegalArgumentException) {
-        e.printStackTrace()
-        null
-    }.also {
-        Log.d("base64ToBitmap", "decodedImage: $it")
-    }
-}
-
 @Composable
 fun BottomNavBar(navController: NavController) {
     val currentDestination = navController
@@ -1194,41 +1056,3 @@ fun BottomNavBar(navController: NavController) {
         }
     }
 }
-
-data class InventoryItem(
-    val Name: String? = null,
-    val Description: String? = null,
-    val Quantity: QuantityStatus = QuantityStatus(),
-    val ImageBase64: String? = null
-)
-
-data class QuantityStatus(
-    val normal: Int = 0,
-    val damaged: Int = 0,
-    val missing: Int = 0,
-    val total: Int = 0,
-)
-
-data class BottomNavItem(
-    val label: String,
-    val icon: ImageVector,
-    val route:String,
-)
-
-val BottomNavItems = listOf(
-    BottomNavItem(
-        label = "Home",
-        icon = Icons.Filled.Home,
-        route = "dashboard"
-    ),
-    BottomNavItem(
-        label = "Notes",
-        icon = Icons.Filled.Notes,
-        route = "notes"
-    ),
-    BottomNavItem(
-        label = "Settings",
-        icon = Icons.Filled.Settings,
-        route = "settings"
-    )
-)
