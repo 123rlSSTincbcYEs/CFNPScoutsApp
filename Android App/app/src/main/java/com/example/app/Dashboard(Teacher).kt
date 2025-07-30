@@ -1,6 +1,7 @@
 package com.example.app
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -57,6 +58,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.zIndex
@@ -70,6 +73,7 @@ import kotlinx.coroutines.time.delay
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DashboardTApp(navController: NavController) {
+    var searchQuery by remember { mutableStateOf("") }
     var items by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -115,6 +119,21 @@ fun DashboardTApp(navController: NavController) {
                 )
             }
 
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
+            )
+
             when {
                 errorMessage != null -> {
                     Text(text = "Error: $errorMessage")
@@ -153,6 +172,14 @@ fun DashboardTApp(navController: NavController) {
                                     val days = dueDate?.toDate()?.let { daysUntil(it) }
                                     val id = item["id"] as? String ?: ""
                                     val imageBase64 = item["imageBase64"] as? String
+
+                                    // Skip item if search query doesn't match
+                                    if (searchQuery.isNotBlank() &&
+                                        !name.lowercase().replace(" ", "")
+                                            .contains(searchQuery.lowercase().replace(" ", ""))
+                                    ) {
+                                        return@items
+                                    }
 
                                     ItemUI(
                                         name = name,
@@ -196,7 +223,7 @@ fun DashboardTApp(navController: NavController) {
                     LaunchedEffect(refresh) {
                         if (refresh) {
                             loading = true
-                            kotlinx.coroutines.delay(1000)
+                            kotlinx.coroutines.delay(500)
                             getItemsFromFirestore(
                                 collectionName = "items",
                                 onSuccess = { fetchedItems ->

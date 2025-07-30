@@ -970,7 +970,7 @@ fun Settings(navController: NavController) {
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "Acknowledgements",
@@ -979,7 +979,7 @@ fun Settings(navController: NavController) {
             )
 
             Text(
-                text = "This App IS Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
+                text = "This App Is Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
