@@ -123,9 +123,9 @@ struct AddItemView: View {
             DispatchQueue.main.async {
                 isSubmitting = false
                 if let err = err {
-                    print("❌ Error submitting item:", err.localizedDescription)
+                    print("Error submitting item:", err.localizedDescription)
                 } else {
-                    print("✅ Item submitted successfully.")
+                    print("Item submitted successfully.")
                     onComplete()
                     dismiss()
                 }
