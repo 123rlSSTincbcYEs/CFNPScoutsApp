@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #f3f1ed;
+      --card-bg: #ffffff;
+      --radius: 14px;
+      --shadow: 0 16px 40px -10px rgba(60, 72, 88, 0.1);
+      --brand: #2e8b57;
+      --brand-hover: #246b46;
+      --danger: #e74c3c;
+      --radius-sm: 6px;
+      --transition: 0.25s cubic-bezier(.4, .2, .2, 1);
+      --input-bg: #d2b48c;
+      --input-border: #a0a0a0;
+      --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --text: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-stack);
+      background-color: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      color: var(--text);
+    }
+
+    .container {
+      position: relative;
+      background-color: var(--card-bg);
+      padding: 48px 36px 32px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      overflow: hidden;
+    }
+
+    .logo {
+      width: 360px;
+      height: auto;
+      margin: 0 auto 12px;
+      display: block;
+      object-fit: contain;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1.1;
+    }
+
+    .subtext {
+      font-size: 14px;
+      margin-bottom: 24px;
+      color: #555;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      position: relative;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #444;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 15px;
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      background-color: var(--input-bg);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      appearance: none;
+      color: #1f2937;
+    }
+
+    input::placeholder {
+      color: rgba(31, 41, 55, 0.6);
+    }
+
+    input:focus {
+      border-color: #2e8b57;
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.2);
+    }
+
+    .show-password {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      padding: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #28323f;
+    }
+
+    .show-password svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .show-password:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--brand);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color var(--transition), transform 0.15s ease;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .login-btn:hover:not(:disabled) {
+      background-color: var(--brand-hover);
+    }
+
+    .login-btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .error-region {
+      margin-top: 12px;
+      min-height: 22px;
+      font-size: 14px;
+      color: var(--danger);
+    }
+
+    .loader-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(243, 241, 237, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      border-radius: var(--radius);
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(46, 139, 87, 0.3);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #errorBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+      display: none;
+      z-index: 999;
+    }
+
+    #errorPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: var(--danger);
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 24px 24px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 24px 60px -10px rgba(231, 76, 60, 0.5);
+      display: none;
+      z-index: 1000;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.3;
+      animation: popupIn 0.35s cubic-bezier(.4, .2, .2, 1) forwards;
+    }
+
+    #errorPopup.show {
+      display: block;
+    }
+
+    #errorPopup .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #fff;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #errorPopup .title {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    #errorPopup .message {
+      margin-bottom: 16px;
+    }
+
+    #errorPopup .ok-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: filter var(--transition);
+      color: #ffffff
+    }
+
+    #errorPopup .ok-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(46, 139, 87, 0.6);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
+      authDomain: "cfnp-b0c6d.firebaseapp.com",
+      databaseURL: "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cfnp-b0c6d",
+      storageBucket: "cfnp-b0c6d.appspot.com",
+      messagingSenderId: "40265217030",
+      appId: "1:40265217030:web:8e84f4eff13e6dfad17f87"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.querySelector(".container");
+      const form = document.getElementById("loginForm");
+      const loader = document.getElementById("loaderOverlay");
+      const loginButton = form.querySelector("button");
+      const errorPopup = document.getElementById("errorPopup");
+      const errorBackdrop = document.getElementById("errorBackdrop");
+      const messageText = document.getElementById("errorMessageText");
+      const toggleBtn = document.getElementById("togglePassword");
+      const passwordInput = document.getElementById("password");
+      const emailInput = document.getElementById("email");
+      let showing = false;
+
+      container.style.visibility = "hidden";
+
+      function showError(message, field) {
+        messageText.textContent = message;
+        if (field) {
+          field.setAttribute("aria-invalid", "true");
+          field.focus({ preventScroll: true });
+        }
+        errorBackdrop.style.display = "block";
+        errorPopup.classList.add("show");
+      }
+
+      function clearFieldErrors() {
+        [emailInput, passwordInput].forEach(f => {
+          f.removeAttribute("aria-invalid");
+        });
+      }
+
+      function hideError() {
+        errorPopup.classList.remove("show");
+        setTimeout(() => {
+          errorBackdrop.style.display = "none";
+          messageText.textContent = "";
+        }, 250);
+      }
+
+      document.getElementById("closeErrorBtn").addEventListener("click", hideError);
+      document.getElementById("errorOkBtn").addEventListener("click", hideError);
+      errorBackdrop.addEventListener("click", hideError);
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          window.location = "dashboard.html";
+          return;
+        }
+        container.style.visibility = "visible";
+      });
+
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        showing = !showing;
+        if (showing) {
+          passwordInput.setAttribute("type", "text");
+          toggleBtn.innerHTML = `
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-5.52 0-10-4-10-7s4.48-7 10-7a9.98 9.98 0 0 1 5.94 1.94"/>
+            <path d="M1 1l22 22"/>
+            <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24"/>
+          </svg>
+          Hide
+        `;
+        } else {
+          passwordInput.setAttribute("type", "password");
+          toggleBtn.innerHTML = `
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1.05 12c1.73 4.27 6.04 7 10.95 7 1.88 0 3.65-.4 5.25-1.1"/>
+            <path d="M4.22 4.22A16.81 16.81 0 0 1 12 3c5.52 0 10 4 10 7 0 .88-.17 1.72-.48 2.52"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          Show
+        `;
+        }
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        clearFieldErrors();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+          showError("Please fill in both email and password.", !email ? emailInput : passwordInput);
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showError("Please enter a valid email address.", emailInput);
+          return;
+        }
+
+        if (password.length < 8) {
+          showError("Password must be at least 8 characters long.", passwordInput);
+          return;
+        }
+
+        loader.style.display = "flex";
+        loginButton.disabled = true;
+        form.querySelectorAll("input").forEach(i => i.disabled = true);
+
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            window.location = "dashboard.html";
+          })
+          .catch((error) => {
+            showError(error.message || "Login failed. Please try again.");
+          })
+          .finally(() => {
+            loader.style.display = "none";
+            loginButton.disabled = false;
+            form.querySelectorAll("input").forEach(i => i.disabled = false);
+            document.getElementById("password").value = "";
+            showing = false;
+            passwordInput.setAttribute("type", "password");
+            toggleBtn.innerHTML = `
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1.05 12c1.73 4.27 6.04 7 10.95 7 1.88 0 3.65-.4 5.25-1.1"/>
+              <path d="M4.22 4.22A16.81 16.81 0 0 1 12 3c5.52 0 10 4 10 7 0 .88-.17 1.72-.48 2.52"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            Show
+          `;
+          });
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div class="container" aria-label="Login form">
+    <img src="image-removebg-preview.png" alt="Logo" class="logo" />
+    <h2>Welcome Back</h2>
+    <div class="subtext">Sign in to your account to continue.</div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter Your Email" required autocomplete="email"
+          aria-required="true" />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 4px;">
+        <label for="password">Password</label>
+        <div style="position: relative;">
+          <input type="password" id="password" placeholder="Enter Your Password" required
+            autocomplete="current-password" aria-required="true" />
+          <button id="togglePassword" class="show-password" aria-label="Toggle password visibility" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1.05 12c1.73 4.27 6.04 7 10.95 7 1.88 0 3.65-.4 5.25-1.1" />
+              <path d="M4.22 4.22A16.81 16.81 0 0 1 12 3c5.52 0 10 4 10 7 0 .88-.17 1.72-.48 2.52" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            Show
+          </button>
+        </div>
+      </div>
+
+      <div class="error-region" aria-live="polite" id="messageRegion"></div>
+
+      <button class="login-btn" type="submit" aria-label="Log in">
+        <span>Login</span>
+      </button>
+    </form>
+
+    <div class="loader-overlay" id="loaderOverlay" aria-hidden="true">
+      <div class="spinner" role="status" aria-label="Loading"></div>
+    </div>
+  </div>
+
+  <div id="errorBackdrop" aria-hidden="true"></div>
+  <div id="errorPopup" role="alert" aria-live="assertive" aria-modal="true" aria-label="Error message">
+    <button class="close-btn" id="closeErrorBtn" aria-label="Close">&times;</button>
+    <div class="title">Login Error</div>
+    <div class="message" id="errorMessageText">Something went wrong.</div>
+    <button class="ok-btn" id="errorOkBtn">Okay</button>
+  </div>
+</body>
+
+</html>

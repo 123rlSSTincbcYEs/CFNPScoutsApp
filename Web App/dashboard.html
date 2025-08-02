@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dashboard</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f3f1ed;
+      }
+
+      header {
+        background-color: #2e8b57;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        font-size: 1.5rem;
+      }
+
+      .top-bar {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background-color: #ffffff;
+        padding: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .top-bar div {
+        text-align: center;
+        color: #444;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .top-bar .active {
+        color: #2e8b57;
+      }
+
+      main {
+        padding: 1rem;
+        padding-top: 0.5rem;
+      }
+
+      .search-bar {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        background-color: #d2b48c;
+        color: #333;
+      }
+
+      .items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .item-card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .item-card img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 1rem;
+      }
+
+      .item-details {
+        flex: 1;
+      }
+
+      .item-details h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #222;
+      }
+
+      .item-details p {
+        margin: 0.2rem 0;
+        color: #555;
+      }
+
+      .more-options {
+        font-size: 1.5rem;
+        color: #888;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        margin-left: 1rem;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 2rem;
+      }
+
+      .actions button {
+        background-color: #2e8b57;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+
+      .actions button:hover {
+        background-color: #246b46;
+      }
+    </style>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
+        authDomain: "cfnp-b0c6d.firebaseapp.com",
+        databaseURL: "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "cfnp-b0c6d",
+        storageBucket: "cfnp-b0c6d.appspot.com",
+        messagingSenderId: "40265217030",
+        appId: "1:40265217030:web:8e84f4eff13e6dfad17f87"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("✅ Logged in as:", user.email);
+          const searchInput = document.querySelector(".search-bar");
+          searchInput.addEventListener("input", () => {
+            loadItems(searchInput.value.trim());
+          });
+
+          document.getElementById("reloadBtn").addEventListener("click", () => {
+            searchInput.value = "";
+            loadItems();
+          });
+
+          document.getElementById("addItem").addEventListener("click", () => {
+            window.location.href = "add-edit.html";
+          });
+
+          loadItems();
+        } else {
+          window.location.href = "login.html";
+        }
+      });
+
+      async function loadItems(searchTerm = "") {
+        const itemsList = document.getElementById("itemsList");
+        itemsList.innerHTML = "Loading...";
+
+        try {
+          const querySnapshot = await getDocs(collection(db, "items"));
+          itemsList.innerHTML = "";
+
+          let found = false;
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+
+            const name = data.name || "Unnamed Item";
+            if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
+              found = true;
+
+              let imgSrc = data.imageBase64 || "";
+              if (imgSrc) {
+                if (!imgSrc.startsWith("data:image")) {
+                    imgSrc = "data:image/png;base64," + imgSrc;
+                }
+              } else {
+                imgSrc = "https://via.placeholder.com/50";
+              }
+
+
+              const qty = data.quantity.total ?? "N/A";
+              const desc = data.description || "";
+
+              const card = document.createElement("div");
+              card.className = "item-card";
+
+              card.innerHTML = `
+                <img src="${imgSrc}" alt="${name}" />
+                <div class="item-details">
+                  <h3>${name}</h3>
+                  <p>Qty: ${qty}</p>
+                  <p>${desc}</p>
+                </div>
+                <button class="more-options" aria-label="More options for ${name}">⋮</button>
+              `;
+
+              const moreBtn = card.querySelector(".more-options");
+              moreBtn.addEventListener("click", () => {
+                alert(`More options clicked for: ${name}`);
+              });
+
+              itemsList.appendChild(card);
+            }
+          });
+
+          if (!found) {
+            itemsList.innerHTML = "<p>No items match your search.</p>";
+          }
+        } catch (error) {
+          itemsList.innerHTML = `<p style="color:red;">Error loading items: ${error.message}</p>`;
+          console.error("Error loading items:", error);
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.querySelector(".search-bar");
+        searchInput.addEventListener("input", () => {
+          loadItems(searchInput.value.trim());
+        });
+
+        document.getElementById("reloadBtn").addEventListener("click", () => {
+          searchInput.value = "";
+          loadItems();
+        });
+
+        document.getElementById("addItem").addEventListener("click", () => {
+          window.location.href = "add-edit.html";
+        })
+
+        loadItems();
+      });
+    </script>
+  </head>
+  <body>
+    <header>Dashboard</header>
+
+    <div class="top-bar">
+      <div class="active">🏠 Home</div>
+      <div>📄 Notes</div>
+      <div><a href="settings.html">⚙️ Settings</a></div>
+    </div>
+
+    <main>
+      <input class="search-bar" type="text" placeholder="Search" aria-label="Search items" />
+      <div class="items-list" id="itemsList">
+
+      </div>
+
+      <div class="actions">
+        <button id="reloadBtn">Reload</button>
+        <button id="addItem">➕ Add Item</button>
+      </div>
+    </main>
+  </body>
+</html>
