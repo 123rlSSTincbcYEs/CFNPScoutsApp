@@ -372,8 +372,8 @@
     globalMoreMenu.setAttribute("role", "menu");
     document.body.appendChild(globalMoreMenu);
 
-    let currentMenuItemId = null; 
-    let currentMenuCard = null; 
+    let currentMenuItemId = null;
+    let currentMenuCard = null;
 
     function closeMoreMenu() {
       globalMoreMenu.style.display = "none";
@@ -383,7 +383,7 @@
     }
 
     function openMoreMenu(button, itemDoc, card) {
-      closeMoreMenu(); 
+      closeMoreMenu();
       currentMenuItemId = itemDoc.id;
       currentMenuCard = card;
 
@@ -394,7 +394,7 @@
       `;
 
       const rect = button.getBoundingClientRect();
-      const menuHeight = globalMoreMenu.offsetHeight || 120; 
+      const menuHeight = globalMoreMenu.offsetHeight || 120;
       let top = rect.bottom + 6;
       let left = rect.left;
 
@@ -430,7 +430,6 @@
       };
     }
 
-    // Close menu on outside click or ESC key
     document.addEventListener("click", (e) => {
       if (
         !globalMoreMenu.contains(e.target) &&
@@ -458,8 +457,16 @@
         querySnapshot.forEach((itemDoc) => {
           const data = itemDoc.data();
           const name = data.name || "Unnamed Item";
+          const tags = Array.isArray(data.tags) ? data.tags : [];
+          const desc = data.description || "";
+          const qty = data.quantity?.total ?? "N/A";
 
-          if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
+          // Convert to lowercase for matching
+          const term = searchTerm.toLowerCase();
+          const matchesName = name.toLowerCase().includes(term);
+          const matchesTags = tags.some(tag => tag.toLowerCase().includes(term));
+
+          if (matchesName || matchesTags) {
             let imgSrc = data.imageBase64 || "";
             if (imgSrc) {
               if (!imgSrc.startsWith("data:image")) {
@@ -469,27 +476,31 @@
               imgSrc = "https://via.placeholder.com/50?text=No+Image";
             }
 
-            const qty = data.quantity?.total ?? "N/A";
-            const desc = data.description || "";
-
             const card = document.createElement("div");
             card.className = "item-card";
             card.setAttribute("data-id", itemDoc.id);
 
+            // Generate tags HTML
+            const tagsHtml = tags.length
+              ? `<p class="tags" style="margin-top:4px; font-size:0.8rem; color:#2e8b57;">
+               Tags: ${tags.map(tag => `<span style="background:#e6f4ea; padding:2px 6px; border-radius:4px; margin-right:4px;">${tag}</span>`).join("")}
+             </p>`
+              : "";
+
             card.innerHTML = `
-              <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
-                <img src="${imgSrc}" alt="${name}" />
-                <div class="item-details">
-                  <h3>${name}</h3>
-                  <p>Qty: ${qty}</p>
-                  <p>${desc}</p>
-                </div>
-              </div>
-              <button class="more-options" aria-label="More options for ${name}">⋮</button>
-            `;
+          <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
+            <img src="${imgSrc}" alt="${name}" />
+            <div class="item-details">
+              <h3>${name}</h3>
+              <p>Qty: ${qty}</p>
+              <p>${desc}</p>
+              ${tagsHtml}
+            </div>
+          </div>
+          <button class="more-options" aria-label="More options for ${name}">⋮</button>
+        `;
 
             const moreBtn = card.querySelector(".more-options");
-
             moreBtn.addEventListener("click", (e) => {
               e.stopPropagation();
               openMoreMenu(moreBtn, itemDoc, card);

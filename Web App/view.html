@@ -145,13 +145,20 @@
           imgSrc = "https://via.placeholder.com/400?text=No+Image";
         }
 
+        const tagsHtml = Array.isArray(data.tags) && data.tags.length > 0
+          ? `<p><span class="label">Tags:</span> ${data.tags
+            .map(tag => `<span style="background:#e6f4ea; color:#2e8b57; padding:2px 6px; border-radius:4px; margin-right:4px;">${tag}</span>`)
+            .join("")}</p>`
+          : "";
+
         const html = `
-          <h1>${data.name || "Unnamed Item"}</h1>
-          <img src="${imgSrc}" alt="${data.name || "Unnamed Item"}" />
-          <p><span class="label">Quantity:</span> ${data.quantity?.total ?? "N/A"}</p>
-          <p><span class="label">Description:</span> ${data.description || "No description."}</p>
-          <button class="back-btn" id="backBtn">← Back to Dashboard</button>
-        `;
+      <h1>${data.name || "Unnamed Item"}</h1>
+      <img src="${imgSrc}" alt="${data.name || "Unnamed Item"}" />
+      <p><span class="label">Quantity:</span> ${data.quantity?.total ?? "N/A"}</p>
+      <p><span class="label">Description:</span> ${data.description || "No description."}</p>
+      ${tagsHtml}
+      <button class="back-btn" id="backBtn">← Back to Dashboard</button>
+    `;
 
         document.getElementById("content").innerHTML = html;
 

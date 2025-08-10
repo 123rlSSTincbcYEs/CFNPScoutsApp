@@ -1,686 +1,731 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Add/Edit Item</title>
-    <style>
-      :root {
-        --bg: #f3f1ed;
-        --card: #fffaf3;
-        --radius: 16px;
-        --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        --border: #40703f;
-        --focus: #2e8b57;
-        --wrapper-max-height: calc(100vh - 2rem);
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add/Edit Item</title>
+  <style>
+    :root {
+      --bg: #f3f1ed;
+      --card: #fffaf3;
+      --radius: 16px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --border: #40703f;
+      --focus: #2e8b57;
+      --wrapper-max-height: calc(100vh - 2rem);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #f5f1e7, #e8e2d5);
+      display: flex;
+      justify-content: center;
+      padding: 1rem;
+      line-height: 1.35;
+      color: #222;
+    }
+
+    .wrapper {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 22px;
+      padding: 28px 32px 24px;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      width: fit-content;
+      max-width: 100%;
+      max-height: var(--wrapper-max-height);
+      overflow: auto;
+      min-width: 320px;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
 
-      * {
-        box-sizing: border-box;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
+    }
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        background: linear-gradient(135deg, #f5f1e7, #e8e2d5);
-        display: flex;
-        justify-content: center;
-        padding: 1rem;
-        line-height: 1.35;
-        color: #222;
-      }
+    .title {
+      font-size: 2.1rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 0;
+    }
 
-      .wrapper {
-        display: inline-flex;
-        flex-direction: column;
-        gap: 22px;
-        padding: 28px 32px 24px;
-        border-radius: 24px;
-        background: #fff;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-        width: fit-content;
-        max-width: 100%;
-        max-height: var(--wrapper-max-height);
-        overflow: auto;
-        min-width: 320px;
-        animation: fadeInUp 0.4s ease both;
-      }
+    .top {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
 
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
+    .left,
+    .right {
+      width: 100%;
+    }
 
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
+    /* Image uploader */
+    .image-uploader {
+      position: relative;
+      background: var(--card);
+      border-radius: var(--radius);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px dashed #bbb;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      padding: 4px;
+      min-width: 220px;
+    }
 
-      .title {
-        font-size: 2.1rem;
-        font-weight: 700;
-        text-align: center;
-        margin: 0;
-      }
+    .image-uploader:hover {
+      border-color: var(--focus);
+      background: #f4f9f6;
+      transform: scale(1.01);
+    }
 
+    .image-uploader.dragover {
+      background: #e6f4ea;
+      border-color: var(--focus);
+    }
+
+    .image-uploader input {
+      display: none;
+    }
+
+    .placeholder {
+      font-size: 3rem;
+      color: #888;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .image-uploader img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 12px;
+    }
+
+    /* Quantities */
+    .quantities {
+      border: none;
+      border-radius: 14px;
+      padding: 16px 18px 28px;
+      display: flex;
+      gap: 14px;
+      background: #faf8f4;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      position: relative;
+    }
+
+    .qty-group {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 999px;
+      padding: 6px 12px;
+      gap: 8px;
+      flex: 1 1 140px;
+      min-width: 120px;
+      border: 1px solid #ddd;
+    }
+
+    .qty-group label {
+      font-weight: 600;
+      color: #444;
+      font-size: 0.9rem;
+    }
+
+    .qty-group input {
+      border: none;
+      width: 50px;
+      text-align: center;
+      font-size: 1rem;
+      background: transparent;
+      outline: none;
+    }
+
+    .total-box {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -16px;
+      background: var(--bg);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      white-space: nowrap;
+    }
+
+    /* Fields with floating labels */
+    .field {
+      position: relative;
+      padding-top: 1.2rem;
+      background: #fffaf3;
+      border-radius: 14px;
+      padding: 16px 14px;
+    }
+
+    .field input,
+    .field textarea {
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      outline: none;
+      width: 100%;
+      color: #222;
+      font-weight: 500;
+      padding: 6px 4px;
+    }
+
+    .field label {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      font-size: 0.95rem;
+      color: #777;
+      pointer-events: none;
+      transition: 0.2s ease all;
+    }
+
+    .field input:focus+label,
+    .field input:not(:placeholder-shown)+label,
+    .field textarea:focus+label,
+    .field textarea:not(:placeholder-shown)+label {
+      top: 4px;
+      font-size: 0.75rem;
+      color: var(--focus);
+    }
+
+    /* Buttons */
+    .buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .buttons button {
+      flex: 1 1 140px;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 120px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .buttons button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+    }
+
+    .buttons button:active {
+      transform: scale(0.97);
+    }
+
+    .cancel {
+      background: linear-gradient(135deg, #e25b5b, #b72c2c);
+      color: white;
+    }
+
+    .create {
+      background: linear-gradient(135deg, #3cb371, #2e8b57);
+      color: white;
+      box-shadow: 0 4px 10px rgba(46, 139, 87, 0.4);
+    }
+
+    .create:hover {
+      filter: brightness(1.05);
+    }
+
+    .tag {
+      background: #d9f2e4;
+      color: #2e8b57;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag button {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #2e8b57;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .note {
+      font-size: 0.85rem;
+      text-align: center;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    @media (min-width: 900px) {
       .top {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        align-items: start;
+      }
+
+      .left {
         display: flex;
-        flex-direction: column;
-        gap: 24px;
+        justify-content: center;
+        align-items: flex-start;
       }
 
-      .left,
-      .right {
-        width: 100%;
-      }
-
-      /* Image uploader */
       .image-uploader {
-        position: relative;
-        background: var(--card);
-        border-radius: var(--radius);
-        aspect-ratio: 1 / 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        overflow: hidden;
-        border: 2px dashed #bbb;
-        transition: border-color 0.2s, background 0.2s, transform 0.15s;
-        padding: 4px;
-        min-width: 220px;
-      }
-
-      .image-uploader:hover {
-        border-color: var(--focus);
-        background: #f4f9f6;
-        transform: scale(1.01);
-      }
-
-      .image-uploader.dragover {
-        background: #e6f4ea;
-        border-color: var(--focus);
-      }
-
-      .image-uploader input {
-        display: none;
-      }
-
-      .placeholder {
-        font-size: 3rem;
-        color: #888;
-        user-select: none;
-        line-height: 1;
-      }
-
-      .image-uploader img {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        border-radius: 12px;
+        max-width: 420px;
+        aspect-ratio: 4 / 3;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .image-uploader {
+        width: 100%;
       }
 
-      /* Quantities */
       .quantities {
-        border: none;
-        border-radius: 14px;
-        padding: 16px 18px 28px;
-        display: flex;
-        gap: 14px;
-        background: #faf8f4;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        position: relative;
+        flex-direction: column;
+        align-items: stretch;
       }
+    }
 
-      .qty-group {
-        display: flex;
-        align-items: center;
-        background: #fff;
-        border-radius: 999px;
-        padding: 6px 12px;
-        gap: 8px;
-        flex: 1 1 140px;
-        min-width: 120px;
-        border: 1px solid #ddd;
-      }
-
-      .qty-group label {
-        font-weight: 600;
-        color: #444;
-        font-size: 0.9rem;
-      }
-
-      .qty-group input {
-        border: none;
-        width: 50px;
-        text-align: center;
-        font-size: 1rem;
-        background: transparent;
-        outline: none;
-      }
-
-      .total-box {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: -16px;
-        background: var(--bg);
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        white-space: nowrap;
-      }
-
-      /* Fields with floating labels */
-      .field {
-        position: relative;
-        padding-top: 1.2rem;
-        background: #fffaf3;
-        border-radius: 14px;
-        padding: 16px 14px;
-      }
-
-      .field input,
-      .field textarea {
-        border: none;
-        background: transparent;
-        font-size: 1rem;
-        outline: none;
-        width: 100%;
-        color: #222;
-        font-weight: 500;
-        padding: 6px 4px;
-      }
-
-      .field label {
-        position: absolute;
-        left: 20px;
-        top: 20px;
-        font-size: 0.95rem;
-        color: #777;
-        pointer-events: none;
-        transition: 0.2s ease all;
-      }
-
-      .field input:focus + label,
-      .field input:not(:placeholder-shown) + label,
-      .field textarea:focus + label,
-      .field textarea:not(:placeholder-shown) + label {
-        top: 4px;
-        font-size: 0.75rem;
-        color: var(--focus);
-      }
-
-      /* Buttons */
-      .buttons {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-        margin-top: 2px;
-      }
-
+    @media (max-width: 600px) {
       .buttons button {
-        flex: 1 1 140px;
-        padding: 14px 18px;
-        border: none;
-        border-radius: 18px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        min-width: 120px;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        flex: 1 1 100%;
       }
 
-      .buttons button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+      .quantities {
+        padding-bottom: 24px;
       }
+    }
+  </style>
+</head>
 
-      .buttons button:active {
-        transform: scale(0.97);
-      }
+<body>
+  <div class="wrapper">
+    <h1 class="title" id="pageTitle">Add New Item</h1>
 
-      .cancel {
-        background: linear-gradient(135deg, #e25b5b, #b72c2c);
-        color: white;
-      }
-
-      .create {
-        background: linear-gradient(135deg, #3cb371, #2e8b57);
-        color: white;
-        box-shadow: 0 4px 10px rgba(46, 139, 87, 0.4);
-      }
-
-      .create:hover {
-        filter: brightness(1.05);
-      }
-
-      .note {
-        font-size: 0.85rem;
-        text-align: center;
-        color: #555;
-        margin-top: 4px;
-      }
-
-      @media (min-width: 900px) {
-        .top {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 32px;
-          align-items: start;
-        }
-
-        .left {
-          display: flex;
-          justify-content: center;
-          align-items: flex-start;
-        }
-
-        .image-uploader {
-          width: 100%;
-          max-width: 420px;
-          aspect-ratio: 4 / 3;
-        }
-      }
-
-      @media (max-width: 700px) {
-        .image-uploader {
-          width: 100%;
-        }
-
-        .quantities {
-          flex-direction: column;
-          align-items: stretch;
-        }
-      }
-
-      @media (max-width: 600px) {
-        .buttons button {
-          flex: 1 1 100%;
-        }
-
-        .quantities {
-          padding-bottom: 24px;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="wrapper">
-      <h1 class="title" id="pageTitle">Add New Item</h1>
-
-      <div class="top">
-        <div class="left">
-          <div
-            class="image-uploader"
-            id="imageUploader"
-            tabindex="0"
-            aria-label="Upload image"
-          >
-            <div class="placeholder" id="placeholder">+</div>
-            <img id="previewImg" style="display: none;" alt="preview" />
-            <input
-              type="file"
-              accept="image/*"
-              id="imageInput"
-              aria-label="Select image"
-            />
-          </div>
-        </div>
-
-        <div class="right">
-          <div class="quantities">
-            <div class="qty-group">
-              <label for="normal">Normal</label>
-              <input type="number" min="0" id="normal" value="0" />
-            </div>
-            <div class="qty-group">
-              <label for="missing">Missing</label>
-              <input type="number" min="0" id="missing" value="0" />
-            </div>
-            <div class="qty-group">
-              <label for="damaged">Damaged</label>
-              <input type="number" min="0" id="damaged" value="0" />
-            </div>
-            <div class="total-box" id="totalBox">Total: 0</div>
-          </div>
-
-          <br /><br />
-
-          <div class="field">
-            <input
-              type="text"
-              id="name"
-              placeholder=" "
-              aria-label="Item name"
-              autocomplete="off"
-            />
-            <label for="name">Name</label>
-          </div>
-
-          <br />
-
-          <div class="field">
-            <textarea
-              id="description"
-              rows="4"
-              placeholder=" "
-              aria-label="Item description"
-              autocomplete="off"
-            ></textarea>
-            <label for="description">Description</label>
-          </div>
+    <div class="top">
+      <div class="left">
+        <div class="image-uploader" id="imageUploader" tabindex="0" aria-label="Upload image">
+          <div class="placeholder" id="placeholder">+</div>
+          <img id="previewImg" style="display: none;" alt="preview" />
+          <input type="file" accept="image/*" id="imageInput" aria-label="Select image" />
         </div>
       </div>
 
-      <div class="buttons">
-        <button class="cancel" id="cancelBtn" type="button">Cancel</button>
-        <button class="create" id="createBtn" type="button">Create</button>
-      </div>
+      <div class="right">
+        <div class="quantities">
+          <div class="qty-group">
+            <label for="normal">Normal</label>
+            <input type="number" min="0" id="normal" value="0" />
+          </div>
+          <div class="qty-group">
+            <label for="missing">Missing</label>
+            <input type="number" min="0" id="missing" value="0" />
+          </div>
+          <div class="qty-group">
+            <label for="damaged">Damaged</label>
+            <input type="number" min="0" id="damaged" value="0" />
+          </div>
+          <div class="total-box" id="totalBox">Total: 0</div>
+        </div>
 
-      <div class="note" id="message"></div>
+        <br /><br />
+
+        <div class="field">
+          <input type="text" id="name" placeholder=" " aria-label="Item name" autocomplete="off" />
+          <label for="name">Name</label>
+        </div>
+
+        <br />
+
+        <div class="field">
+          <textarea id="description" rows="4" placeholder=" " aria-label="Item description"
+            autocomplete="off"></textarea>
+          <label for="description">Description</label>
+        </div>
+      </div>
     </div>
 
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-      import {
-        getAuth,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-      import {
-        getFirestore,
-        collection,
-        addDoc,
-        doc,
-        getDoc,
-        updateDoc,
-      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <br>
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
-        authDomain: "cfnp-b0c6d.firebaseapp.com",
-        databaseURL:
-          "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "cfnp-b0c6d",
-        storageBucket: "cfnp-b0c6d.appspot.com",
-        messagingSenderId: "40265217030",
-        appId: "1:40265217030:web:8e84f4eff13e6dfad17f87",
-      };
+    <div class="field" id="tagsField">
+      <input type="text" id="tagInput" placeholder="" aria-label="Tags" autocomplete="off" />
+      <label for="tagInput">Tags</label>
+      <div id="tagList" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+    </div>
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+    <div class="buttons">
+      <button class="cancel" id="cancelBtn" type="button">Cancel</button>
+      <button class="create" id="createBtn" type="button">Create</button>
+    </div>
 
-      const normalEl = document.getElementById("normal");
-      const missingEl = document.getElementById("missing");
-      const damagedEl = document.getElementById("damaged");
-      const totalBox = document.getElementById("totalBox");
-      const nameEl = document.getElementById("name");
-      const descEl = document.getElementById("description");
-      const createBtn = document.getElementById("createBtn");
-      const cancelBtn = document.getElementById("cancelBtn");
-      const messageEl = document.getElementById("message");
-      const imageInput = document.getElementById("imageInput");
-      const previewImg = document.getElementById("previewImg");
-      const placeholder = document.getElementById("placeholder");
-      const pageTitle = document.getElementById("pageTitle");
+    <div class="note" id="message"></div>
+  </div>
 
-      let imageWebpBase64 = "";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      doc,
+      getDoc,
+      updateDoc,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-      // Get URL parameter by name
-      function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
+      authDomain: "cfnp-b0c6d.firebaseapp.com",
+      databaseURL:
+        "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cfnp-b0c6d",
+      storageBucket: "cfnp-b0c6d.appspot.com",
+      messagingSenderId: "40265217030",
+      appId: "1:40265217030:web:8e84f4eff13e6dfad17f87",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const normalEl = document.getElementById("normal");
+    const missingEl = document.getElementById("missing");
+    const damagedEl = document.getElementById("damaged");
+    const totalBox = document.getElementById("totalBox");
+    const nameEl = document.getElementById("name");
+    const descEl = document.getElementById("description");
+    const createBtn = document.getElementById("createBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const messageEl = document.getElementById("message");
+    const imageInput = document.getElementById("imageInput");
+    const previewImg = document.getElementById("previewImg");
+    const placeholder = document.getElementById("placeholder");
+    const pageTitle = document.getElementById("pageTitle");
+    const tagInput = document.getElementById("tagInput");
+    const tagList = document.getElementById("tagList");
+    let tags = [];
+
+    function renderTags() {
+      tagList.innerHTML = "";
+      tags.forEach((tag, index) => {
+        const tagEl = document.createElement("div");
+        tagEl.className = "tag";
+        tagEl.textContent = tag;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.innerHTML = "&times;";
+        removeBtn.onclick = () => {
+          tags.splice(index, 1);
+          renderTags();
+        };
+
+        tagEl.appendChild(removeBtn);
+        tagList.appendChild(tagEl);
+      });
+    }
+
+    tagInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && tagInput.value.trim() !== "") {
+        e.preventDefault();
+        const newTag = tagInput.value.trim();
+        if (!tags.includes(newTag)) {
+          tags.push(newTag);
+          renderTags();
+        }
+        tagInput.value = "";
+      }
+    });
+
+    let imageWebpBase64 = "";
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const itemId = getQueryParam("id");
+
+    function updateTotal() {
+      const normal = parseInt(normalEl.value) || 0;
+      const missing = parseInt(missingEl.value) || 0;
+      const damaged = parseInt(damagedEl.value) || 0;
+      const total = normal + missing + damaged;
+      totalBox.textContent = "Total: " + total;
+    }
+
+    [normalEl, missingEl, damagedEl].forEach((el) =>
+      el.addEventListener("input", updateTotal)
+    );
+
+    document.getElementById("imageUploader").addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    document
+      .getElementById("imageUploader")
+      .addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          imageInput.click();
+          e.preventDefault();
+        }
+      });
+
+    function stripDataUrlPrefix(dataUrl) {
+      return dataUrl.replace(/^data:.*;base64,/, "");
+    }
+
+    async function convertFileToWebP(file, quality = 0.4, maxDim = 1600) {
+      try {
+        const bitmap = await createImageBitmap(file);
+        let { width, height } = bitmap;
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas =
+          typeof OffscreenCanvas !== "undefined"
+            ? new OffscreenCanvas(width, height)
+            : document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        const blob = await new Promise((resolve) => {
+          if (canvas.convertToBlob) {
+            canvas
+              .convertToBlob({ type: "image/webp", quality })
+              .then(resolve)
+              .catch(() => canvas.toBlob((b) => resolve(b), "image/webp", quality));
+          } else {
+            canvas.toBlob((b) => resolve(b), "image/webp", quality);
+          }
+        });
+        if (!blob) throw new Error("WebP conversion failed");
+        return await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = () => rej(new Error("Read error"));
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.warn("Fallback to original image:", e);
+        return new Promise((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(fr.result);
+          fr.onerror = () => reject(new Error("Fallback read failed"));
+          fr.readAsDataURL(file);
+        });
+      }
+    }
+
+    imageInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      placeholder.textContent = "…";
+      try {
+        const webpDataUrl = await convertFileToWebP(file, 0.4);
+        imageWebpBase64 = webpDataUrl;
+        previewImg.src = imageWebpBase64;
+        previewImg.style.display = "block";
+        placeholder.style.display = "none";
+        placeholder.textContent = "+";
+      } catch (err) {
+        console.error("Image processing error:", err);
+        messageEl.style.color = "red";
+        messageEl.textContent = "Failed to process image.";
+        placeholder.textContent = "+";
+      }
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      normalEl.value = "0";
+      missingEl.value = "0";
+      damagedEl.value = "0";
+      nameEl.value = "";
+      descEl.value = "";
+      imageWebpBase64 = "";
+      previewImg.style.display = "none";
+      placeholder.style.display = "block";
+      updateTotal();
+      messageEl.textContent = "";
+      window.location.href = "dashboard.html";
+    });
+
+    async function loadItemData(id) {
+      if (!id) return;
+      pageTitle.textContent = "Edit Item";
+      createBtn.textContent = "Save";
+      try {
+        const docRef = doc(db, "items", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+
+          tags = data.tags ?? [];
+          renderTags();
+
+          normalEl.value = data.quantity?.normal ?? 0;
+          missingEl.value = data.quantity?.missing ?? 0;
+          damagedEl.value = data.quantity?.damaged ?? 0;
+          updateTotal();
+
+          nameEl.value = data.name ?? "";
+          descEl.value = data.description ?? "";
+
+          if (data.imageBase64) {
+            imageWebpBase64 = "data:image/webp;base64," + data.imageBase64;
+            previewImg.src = imageWebpBase64;
+            previewImg.style.display = "block";
+            placeholder.style.display = "none";
+          }
+        } else {
+          messageEl.style.color = "red";
+          messageEl.textContent = "Item not found.";
+        }
+      } catch (err) {
+        console.error("Error loading item:", err);
+        messageEl.style.color = "red";
+        messageEl.textContent = "Failed to load item data.";
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
       }
 
-      const itemId = getQueryParam("id");
+      if (itemId) {
+        loadItemData(itemId);
+      }
 
-      function updateTotal() {
+      createBtn.addEventListener("click", async () => {
+        messageEl.textContent = "";
+        createBtn.disabled = true;
+        createBtn.textContent = itemId ? "Saving..." : "Creating...";
+
         const normal = parseInt(normalEl.value) || 0;
         const missing = parseInt(missingEl.value) || 0;
         const damaged = parseInt(damagedEl.value) || 0;
         const total = normal + missing + damaged;
-        totalBox.textContent = "Total: " + total;
-      }
+        const name = nameEl.value.trim();
+        const description = descEl.value.trim();
 
-      [normalEl, missingEl, damagedEl].forEach((el) =>
-        el.addEventListener("input", updateTotal)
-      );
-
-      document.getElementById("imageUploader").addEventListener("click", () => {
-        imageInput.click();
-      });
-
-      document
-        .getElementById("imageUploader")
-        .addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            imageInput.click();
-            e.preventDefault();
-          }
-        });
-
-      function stripDataUrlPrefix(dataUrl) {
-        return dataUrl.replace(/^data:.*;base64,/, "");
-      }
-
-      async function convertFileToWebP(file, quality = 0.4, maxDim = 1600) {
-        try {
-          const bitmap = await createImageBitmap(file);
-          let { width, height } = bitmap;
-          const scale = Math.min(1, maxDim / Math.max(width, height));
-          width = Math.round(width * scale);
-          height = Math.round(height * scale);
-          const canvas =
-            typeof OffscreenCanvas !== "undefined"
-              ? new OffscreenCanvas(width, height)
-              : document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(bitmap, 0, 0, width, height);
-          const blob = await new Promise((resolve) => {
-            if (canvas.convertToBlob) {
-              canvas
-                .convertToBlob({ type: "image/webp", quality })
-                .then(resolve)
-                .catch(() => canvas.toBlob((b) => resolve(b), "image/webp", quality));
-            } else {
-              canvas.toBlob((b) => resolve(b), "image/webp", quality);
-            }
-          });
-          if (!blob) throw new Error("WebP conversion failed");
-          return await new Promise((res, rej) => {
-            const reader = new FileReader();
-            reader.onload = () => res(reader.result);
-            reader.onerror = () => rej(new Error("Read error"));
-            reader.readAsDataURL(blob);
-          });
-        } catch (e) {
-          console.warn("Fallback to original image:", e);
-          return new Promise((resolve, reject) => {
-            const fr = new FileReader();
-            fr.onload = () => resolve(fr.result);
-            fr.onerror = () => reject(new Error("Fallback read failed"));
-            fr.readAsDataURL(file);
-          });
-        }
-      }
-
-      imageInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        placeholder.textContent = "…";
-        try {
-          const webpDataUrl = await convertFileToWebP(file, 0.4);
-          imageWebpBase64 = webpDataUrl;
-          previewImg.src = imageWebpBase64;
-          previewImg.style.display = "block";
-          placeholder.style.display = "none";
-          placeholder.textContent = "+";
-        } catch (err) {
-          console.error("Image processing error:", err);
+        if (!name) {
           messageEl.style.color = "red";
-          messageEl.textContent = "Failed to process image.";
-          placeholder.textContent = "+";
-        }
-      });
-
-      cancelBtn.addEventListener("click", () => {
-        normalEl.value = "0";
-        missingEl.value = "0";
-        damagedEl.value = "0";
-        nameEl.value = "";
-        descEl.value = "";
-        imageWebpBase64 = "";
-        previewImg.style.display = "none";
-        placeholder.style.display = "block";
-        updateTotal();
-        messageEl.textContent = "";
-        window.location.href = "dashboard.html";
-      });
-
-      // Load item data if editing
-      async function loadItemData(id) {
-        if (!id) return;
-        pageTitle.textContent = "Edit Item";
-        createBtn.textContent = "Save";
-        try {
-          const docRef = doc(db, "items", id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-
-            normalEl.value = data.quantity?.normal ?? 0;
-            missingEl.value = data.quantity?.missing ?? 0;
-            damagedEl.value = data.quantity?.damaged ?? 0;
-            updateTotal();
-
-            nameEl.value = data.name ?? "";
-            descEl.value = data.description ?? "";
-
-            if (data.imageBase64) {
-              imageWebpBase64 = "data:image/webp;base64," + data.imageBase64;
-              previewImg.src = imageWebpBase64;
-              previewImg.style.display = "block";
-              placeholder.style.display = "none";
-            }
-          } else {
-            messageEl.style.color = "red";
-            messageEl.textContent = "Item not found.";
-          }
-        } catch (err) {
-          console.error("Error loading item:", err);
-          messageEl.style.color = "red";
-          messageEl.textContent = "Failed to load item data.";
-        }
-      }
-
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          window.location.href = "login.html";
+          messageEl.textContent = "Name is required.";
+          resetCreateBtn();
           return;
         }
 
-        if (itemId) {
-          loadItemData(itemId);
+        if (!description) {
+          messageEl.style.color = "red";
+          messageEl.textContent = "Description is required.";
+          resetCreateBtn();
+          return;
         }
 
-        createBtn.addEventListener("click", async () => {
-          messageEl.textContent = "";
-          createBtn.disabled = true;
-          createBtn.textContent = itemId ? "Saving..." : "Creating...";
+        if (total < 1) {
+          messageEl.style.color = "red";
+          messageEl.textContent = "At least one quantity must be greater than 0.";
+          resetCreateBtn();
+          return;
+        }
 
-          const normal = parseInt(normalEl.value) || 0;
-          const missing = parseInt(missingEl.value) || 0;
-          const damaged = parseInt(damagedEl.value) || 0;
-          const total = normal + missing + damaged;
-          const name = nameEl.value.trim();
-          const description = descEl.value.trim();
-
-          if (!name) {
-            messageEl.style.color = "red";
-            messageEl.textContent = "Name is required.";
-            resetCreateBtn();
-            return;
+        try {
+          if (itemId) {
+            const docRef = doc(db, "items", itemId);
+            await updateDoc(docRef, {
+              name,
+              description,
+              tags,
+              imageBase64: imageWebpBase64
+                ? stripDataUrlPrefix(imageWebpBase64)
+                : "",
+              quantity: { normal, missing, damaged, total },
+              updatedAt: new Date().toISOString(),
+            });
+            messageEl.style.color = "green";
+            messageEl.textContent = "Item updated successfully.";
+          } else {
+            await addDoc(collection(db, "items"), {
+              name,
+              description,
+              tags,
+              imageBase64: imageWebpBase64
+                ? stripDataUrlPrefix(imageWebpBase64)
+                : "",
+              quantity: { normal, missing, damaged, total },
+              createdAt: new Date().toISOString(),
+            });
+            messageEl.style.color = "green";
+            messageEl.textContent = "Item created successfully.";
           }
 
-          if (!description) {
-            messageEl.style.color = "red";
-            messageEl.textContent = "Description is required.";
-            resetCreateBtn();
-            return;
-          }
-
-          if (total < 1) {
-            messageEl.style.color = "red";
-            messageEl.textContent = "At least one quantity must be greater than 0.";
-            resetCreateBtn();
-            return;
-          }
-
-          try {
-            if (itemId) {
-              // Update existing document
-              const docRef = doc(db, "items", itemId);
-              await updateDoc(docRef, {
-                name,
-                description,
-                imageBase64: imageWebpBase64
-                  ? stripDataUrlPrefix(imageWebpBase64)
-                  : "",
-                quantity: { normal, missing, damaged, total },
-                updatedAt: new Date().toISOString(),
-              });
-              messageEl.style.color = "green";
-              messageEl.textContent = "Item updated successfully.";
-            } else {
-              // Create new document
-              await addDoc(collection(db, "items"), {
-                name,
-                description,
-                imageBase64: imageWebpBase64
-                  ? stripDataUrlPrefix(imageWebpBase64)
-                  : "",
-                quantity: { normal, missing, damaged, total },
-                createdAt: new Date().toISOString(),
-              });
-              messageEl.style.color = "green";
-              messageEl.textContent = "Item created successfully.";
-            }
-
-            setTimeout(() => {
-              window.location.href = "dashboard.html";
-            }, 700);
-          } catch (err) {
-            console.error(err);
-            messageEl.style.color = "red";
-            messageEl.textContent =
-              (itemId ? "Error updating" : "Error creating") +
-              " item: " +
-              (err.message || "unknown");
-          } finally {
-            resetCreateBtn();
-          }
-        });
-
-        function resetCreateBtn() {
-          createBtn.disabled = false;
-          createBtn.textContent = itemId ? "Save" : "Create";
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 700);
+        } catch (err) {
+          console.error(err);
+          messageEl.style.color = "red";
+          messageEl.textContent =
+            (itemId ? "Error updating" : "Error creating") +
+            " item: " +
+            (err.message || "unknown");
+        } finally {
+          resetCreateBtn();
         }
       });
-    </script>
-  </body>
+
+      function resetCreateBtn() {
+        createBtn.disabled = false;
+        createBtn.textContent = itemId ? "Save" : "Create";
+      }
+    });
+  </script>
+</body>
+
 </html>
