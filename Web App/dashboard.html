@@ -15,7 +15,7 @@
       --surface: #ffffff;
       --muted: #555;
       --radius-sm: 6px;
-      --transition: .2s ease;
+      --transition: 0.2s ease;
     }
 
     * {
@@ -48,43 +48,27 @@
       align-items: center;
       background-color: var(--surface);
       padding: 0.5rem 0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       position: sticky;
-      top: 64px;
-      z-index: 200;
+      top: 0;
+      z-index: 100;
+      font-weight: bold;
     }
 
-    .top-bar .tab {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .top-bar div {
       text-align: center;
       color: #444;
-      font-weight: bold;
       cursor: pointer;
-      text-decoration: none;
       padding: 6px 12px;
-      border-radius: 6px;
-      transition: background var(--transition), color var(--transition);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
     }
 
-    .top-bar .tab.active {
+    .top-bar .active {
       color: var(--brand);
-    }
-
-    .top-bar .tab svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    main {
-      padding: 1rem;
-      padding-top: 0.5rem;
-      max-width: 1000px;
-      margin: 0 auto;
     }
 
     .controls {
@@ -110,35 +94,6 @@
       display: flex;
       gap: 6px;
       flex-shrink: 0;
-    }
-
-    .top-bar {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background-color: #ffffff;
-      padding: 0.5rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      font-weight: bold;
-    }
-
-    .top-bar div {
-      text-align: center;
-      color: #444;
-      cursor: pointer;
-      padding: 6px 12px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      user-select: none;
-    }
-
-    .top-bar .active {
-      color: #2e8b57;
     }
 
     .view-modes button {
@@ -205,7 +160,7 @@
       gap: 12px;
       position: relative;
       min-height: 80px;
-      transition: transform .15s ease;
+      transition: transform 0.15s ease;
     }
 
     .item-card:hover {
@@ -269,7 +224,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: background .2s ease;
+      transition: background 0.2s ease;
     }
 
     .actions button:hover {
@@ -297,11 +252,75 @@
       background: rgba(46, 139, 87, 0.4);
       border-radius: 6px;
     }
+
+    main {
+      padding: 20px 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Global More Menu */
+    .more-menu-global {
+      position: fixed;
+      background: var(--surface);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      border-radius: 6px;
+      min-width: 140px;
+      z-index: 500;
+      padding: 4px 0;
+      font-weight: 600;
+      display: none;
+      flex-direction: column;
+      user-select: none;
+      animation: fadeIn 0.15s ease forwards;
+    }
+
+    .more-menu-global button {
+      background: none;
+      border: none;
+      padding: 10px 16px;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      color: #222;
+      font-size: 0.95rem;
+      transition: background-color 0.15s ease;
+    }
+
+    .more-menu-global button:hover,
+    .more-menu-global button:focus {
+      background-color: var(--brand);
+      color: white;
+      outline: none;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
@@ -348,6 +367,85 @@
       }
     }
 
+    const globalMoreMenu = document.createElement("div");
+    globalMoreMenu.className = "more-menu-global";
+    globalMoreMenu.setAttribute("role", "menu");
+    document.body.appendChild(globalMoreMenu);
+
+    let currentMenuItemId = null; 
+    let currentMenuCard = null; 
+
+    function closeMoreMenu() {
+      globalMoreMenu.style.display = "none";
+      globalMoreMenu.innerHTML = "";
+      currentMenuItemId = null;
+      currentMenuCard = null;
+    }
+
+    function openMoreMenu(button, itemDoc, card) {
+      closeMoreMenu(); 
+      currentMenuItemId = itemDoc.id;
+      currentMenuCard = card;
+
+      globalMoreMenu.innerHTML = `
+        <button type="button" role="menuitem" class="view-btn">View</button>
+        <button type="button" role="menuitem" class="edit-btn">Edit</button>
+        <button type="button" role="menuitem" class="delete-btn" style="color:#d33;">Delete</button>
+      `;
+
+      const rect = button.getBoundingClientRect();
+      const menuHeight = globalMoreMenu.offsetHeight || 120; 
+      let top = rect.bottom + 6;
+      let left = rect.left;
+
+      if (top + menuHeight > window.innerHeight) {
+        top = rect.top - menuHeight - 6;
+      }
+      if (left + 160 > window.innerWidth) {
+        left = window.innerWidth - 170;
+      }
+
+      globalMoreMenu.style.top = `${top}px`;
+      globalMoreMenu.style.left = `${left}px`;
+      globalMoreMenu.style.display = "flex";
+
+      globalMoreMenu.querySelector(".view-btn").onclick = () => {
+        window.location.href = `view.html?id=${itemDoc.id}`;
+        closeMoreMenu();
+      };
+      globalMoreMenu.querySelector(".edit-btn").onclick = () => {
+        window.location.href = `add-edit.html?id=${itemDoc.id}`;
+        closeMoreMenu();
+      };
+      globalMoreMenu.querySelector(".delete-btn").onclick = async () => {
+        const confirmDelete = confirm(`Are you sure you want to delete "${itemDoc.data().name}"?`);
+        if (!confirmDelete) return;
+        try {
+          await deleteDoc(doc(db, "items", itemDoc.id));
+          if (currentMenuCard) currentMenuCard.remove();
+          closeMoreMenu();
+        } catch (error) {
+          alert("Error deleting item: " + error.message);
+        }
+      };
+    }
+
+    // Close menu on outside click or ESC key
+    document.addEventListener("click", (e) => {
+      if (
+        !globalMoreMenu.contains(e.target) &&
+        !e.target.classList.contains("more-options")
+      ) {
+        closeMoreMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && globalMoreMenu.style.display === "flex") {
+        closeMoreMenu();
+      }
+    });
+
     async function loadItems(searchTerm = "") {
       const itemsList = document.getElementById("itemsList");
       itemsList.innerHTML = "Loading...";
@@ -357,19 +455,18 @@
         itemsList.innerHTML = "";
 
         let found = false;
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
+        querySnapshot.forEach((itemDoc) => {
+          const data = itemDoc.data();
           const name = data.name || "Unnamed Item";
-          if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
-            found = true;
 
+          if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
             let imgSrc = data.imageBase64 || "";
             if (imgSrc) {
               if (!imgSrc.startsWith("data:image")) {
                 imgSrc = "data:image/png;base64," + imgSrc;
               }
             } else {
-              imgSrc = "https://via.placeholder.com/50";
+              imgSrc = "https://via.placeholder.com/50?text=No+Image";
             }
 
             const qty = data.quantity?.total ?? "N/A";
@@ -377,28 +474,31 @@
 
             const card = document.createElement("div");
             card.className = "item-card";
+            card.setAttribute("data-id", itemDoc.id);
 
             card.innerHTML = `
-                <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
-                  <img src="${imgSrc}" alt="${name}" />
-                  <div class="item-details">
-                    <h3>${name}</h3>
-                    <p>Qty: ${qty}</p>
-                    <p>${desc}</p>
-                  </div>
+              <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
+                <img src="${imgSrc}" alt="${name}" />
+                <div class="item-details">
+                  <h3>${name}</h3>
+                  <p>Qty: ${qty}</p>
+                  <p>${desc}</p>
                 </div>
-                <button class="more-options" aria-label="More options for ${name}">⋮</button>
-              `;
+              </div>
+              <button class="more-options" aria-label="More options for ${name}">⋮</button>
+            `;
 
             const moreBtn = card.querySelector(".more-options");
-            moreBtn.addEventListener("click", () => {
-              alert(`More options clicked for: ${name}`);
+
+            moreBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              openMoreMenu(moreBtn, itemDoc, card);
             });
 
             itemsList.appendChild(card);
+            found = true;
           }
         });
-
         if (!found) {
           itemsList.innerHTML = `<div class="empty-state">No items match your search.</div>`;
         }
@@ -428,9 +528,20 @@
         applyViewMode("list");
         saveViewMode("list");
       });
+
       document.getElementById("btnGridView").addEventListener("click", () => {
         applyViewMode("grid");
         saveViewMode("grid");
+      });
+
+      document.getElementById("navHome").addEventListener("click", () => {
+        window.location.href = "dashboard.html";
+      });
+      document.getElementById("navNotes").addEventListener("click", () => {
+        window.location.href = "notes.html";
+      });
+      document.getElementById("navSettings").addEventListener("click", () => {
+        window.location.href = "settings.html";
       });
     }
 
@@ -451,16 +562,6 @@
       const initialMode = getSavedViewMode();
       applyViewMode(initialMode);
       loadItems();
-    });
-
-    document.getElementById("navHome").addEventListener("click", () => {
-      window.location.href = "dashboard.html";
-    });
-    document.getElementById("navNotes").addEventListener("click", () => {
-      window.location.href = "notes.html"
-    });
-    document.getElementById("navSettings").addEventListener("click", () => {
-      window.location.href = "settings.html"
     });
   </script>
 </head>
@@ -497,14 +598,11 @@
     </div>
 
     <div class="items-wrapper" aria-label="Items container">
-      <div class="items-list" id="itemsList" aria-live="polite" aria-label="List of items">
-      </div>
+      <div class="items-list" id="itemsList" aria-live="polite" aria-label="List of items"></div>
     </div>
 
     <div class="actions">
-      <button id="reloadBtn">
-        ⟳ Reload
-      </button>
+      <button id="reloadBtn">⟳ Reload</button>
       <button id="addItem">
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"
           style="margin-right:6px; stroke:currentColor; fill:none; stroke-width:2;">

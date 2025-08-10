@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>View Item</title>
+  <style>
+    :root {
+      --brand: #2e8b57;
+      --bg: #f3f1ed;
+      --surface: #fff;
+      --radius: 10px;
+      --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --muted: #555;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: var(--bg);
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    main {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      max-width: 480px;
+      width: 100%;
+      padding: 1.5rem;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: var(--brand);
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      object-fit: cover;
+    }
+
+    p {
+      margin: 0.5rem 0;
+      color: var(--muted);
+      font-size: 1rem;
+      word-wrap: break-word;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 1rem;
+      color: #444;
+    }
+
+    button.back-btn {
+      margin-top: 1.5rem;
+      background: var(--brand);
+      border: none;
+      color: white;
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button.back-btn:hover {
+      background: #246b46;
+    }
+
+    .loading,
+    .error {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 1.25rem;
+      color: var(--muted);
+    }
+
+    .error {
+      color: #d33;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
+      authDomain: "cfnp-b0c6d.firebaseapp.com",
+      databaseURL:
+        "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cfnp-b0c6d",
+      storageBucket: "cfnp-b0c6d.appspot.com",
+      messagingSenderId: "40265217030",
+      appId: "1:40265217030:web:8e84f4eff13e6dfad17f87",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    function getIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id");
+    }
+
+    function showLoading() {
+      document.getElementById("content").innerHTML =
+        '<div class="loading">Loading item details...</div>';
+    }
+
+    function showError(message) {
+      document.getElementById("content").innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    async function loadItem(id) {
+      showLoading();
+      try {
+        const docRef = doc(db, "items", id);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          showError("Item not found.");
+          return;
+        }
+
+        const data = docSnap.data();
+
+        let imgSrc = data.imageBase64 || "";
+        if (imgSrc && !imgSrc.startsWith("data:image")) {
+          imgSrc = "data:image/png;base64," + imgSrc;
+        } else if (!imgSrc) {
+          imgSrc = "https://via.placeholder.com/400?text=No+Image";
+        }
+
+        const html = `
+          <h1>${data.name || "Unnamed Item"}</h1>
+          <img src="${imgSrc}" alt="${data.name || "Unnamed Item"}" />
+          <p><span class="label">Quantity:</span> ${data.quantity?.total ?? "N/A"}</p>
+          <p><span class="label">Description:</span> ${data.description || "No description."}</p>
+          <button class="back-btn" id="backBtn">← Back to Dashboard</button>
+        `;
+
+        document.getElementById("content").innerHTML = html;
+
+        document.getElementById("backBtn").addEventListener("click", () => {
+          window.location.href = "dashboard.html";
+        });
+      } catch (error) {
+        showError("Error loading item: " + error.message);
+        console.error(error);
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      const id = getIdFromUrl();
+      if (!id) {
+        showError("No item ID provided in URL.");
+        return;
+      }
+      loadItem(id);
+    });
+  </script>
+</head>
+
+<body>
+  <main id="content">
+  </main>
+</body>
+
+</html>

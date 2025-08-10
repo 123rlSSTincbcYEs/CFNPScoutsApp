@@ -1,294 +1,803 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Notes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f3f1ed;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    <head>
+        <meta charset="UTF-8" />
+        <title>Notes</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            * {
+                box-sizing: border-box;
+            }
 
-    header {
-      background-color: #2e8b57;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f3f1ed;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background-color: #ffffff;
-      padding: 0.5rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      font-weight: bold;
-    }
+            header {
+                background-color: #2e8b57;
+                color: white;
+                padding: 1rem;
+                text-align: center;
+                font-size: 1.5rem;
+            }
 
-    .top-bar div {
-      text-align: center;
-      color: #444;
-      cursor: pointer;
-      padding: 6px 12px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      user-select: none;
-    }
+            .top-bar {
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                background-color: #ffffff;
+                padding: 0.5rem 0;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                font-weight: bold;
+            }
 
-    .top-bar .active {
-      color: #2e8b57;
-    }
+            .top-bar div {
+                text-align: center;
+                color: #444;
+                cursor: pointer;
+                padding: 6px 12px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                user-select: none;
+            }
 
-    .container {
-      flex: 1;
-      max-width: 800px;
-      width: 100%;
-      margin: 1.5rem auto;
-      background: white;
-      border-radius: 12px;
-      padding: 25px 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      position: relative;
-    }
+            .top-bar .active {
+                color: #2e8b57;
+            }
 
-    .notes-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+            .main {
+                flex: 1;
+                display: flex;
+                gap: 1rem;
+                max-width: 1100px;
+                width: 100%;
+                margin: 1.5rem auto;
+                padding: 0 10px;
+                overflow: hidden;
+                min-height: 0;
+            }
 
-    .note-label {
-      font-weight: bold;
-      margin-bottom: 4px;
-      font-size: 16px;
-    }
+            .sidebar {
+                width: 280px;
+                background: white;
+                border-radius: 12px;
+                padding: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                position: relative;
+                height: 80vh;
+                min-height: 0;
+            }
 
-    textarea {
-      width: 100%;
-      min-height: 300px;
-      resize: vertical;
-      padding: 16px;
-      font-size: 16px;
-      border: 1px solid #aaa;
-      border-radius: 8px;
-      background-color: #fff;
-      line-height: 1.4;
-      font-family: inherit;
-    }
+            .notes-list {
+                flex: 1;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                min-height: 0;       
+                margin-top: 12px;
+            }
 
-    .status-line {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      margin-top: 4px;
-    }
+            .main {
+                flex: 1;
+                display: flex;
+                gap: 1rem;
+                max-width: 1100px;
+                width: 100%;
+                margin: 1.5rem auto;
+                padding: 0 10px;
+                min-height: 0;
+            }
 
-    .status-text {
-      flex: 1;
-    }
+            .note-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 10px;
+                border-radius: 8px;
+                background: #f9f9f9;
+                cursor: pointer;
+                position: relative;
+            }
 
-    .status-unsaved {
-      color: #555;
-    }
+            .note-item.active {
+                background: #e6f6ec;
+                border: 1px solid #2e8b57;
+            }
 
-    .status-saving {
-      color: #1565c0;
-    }
+            .note-title {
+                flex: 1;
+                font-weight: bold;
+                border: none;
+                background: transparent;
+                font-size: 14px;
+                outline: none;
+                padding: 0;
+                cursor: text;
+            }
 
-    .status-success {
-      color: #2e7d32;
-    }
+            .note-title[contenteditable]:focus {
+                outline: 1px solid #2e8b57;
+                border-radius: 4px;
+            }
 
-    .status-error {
-      color: #c62828;
-    }
+            .add-note-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 12px;
+                border-radius: 8px;
+                background: #2e8b57;
+                color: white;
+                border: none;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 14px;
+                position: relative;
+            }
 
-    .spinner {
-      border: 4px solid #ccc;
-      border-top: 4px solid #2e8b57;
-      border-radius: 50%;
-      width: 18px;
-      height: 18px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
+            .add-note-btn[disabled] {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+            .container {
+                flex: 1;
+                background: white;
+                border-radius: 12px;
+                padding: 25px 30px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
 
-    .small {
-      font-size: 13px;
-      color: #666;
-    }
+            .notes-wrapper {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                flex: 1;
+            }
 
-    .overlay-loading {
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 12px;
-      font-size: 14px;
-      gap: 8px;
-    }
-  </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc,
-      updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+            .note-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
-      authDomain: "cfnp-b0c6d.firebaseapp.com",
-      databaseURL: "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "cfnp-b0c6d",
-      storageBucket: "cfnp-b0c6d.appspot.com",
-      messagingSenderId: "40265217030",
-      appId: "1:40265217030:web:8e84f4eff13e6dfad17f87"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+            .note-name {
+                font-size: 1.25rem;
+                font-weight: bold;
+                flex: 1;
+                border: none;
+                background: transparent;
+                outline: none;
+            }
 
-    let userUid = null;
-    let saveTimeout = null;
-    let latestSaveToken = 0;
+            textarea {
+                width: 100%;
+                flex: 1;
+                resize: vertical;
+                padding: 16px;
+                font-size: 16px;
+                border: 1px solid #aaa;
+                border-radius: 8px;
+                background-color: #fff;
+                line-height: 1.4;
+                font-family: inherit;
+                min-height: 300px;
+            }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const notesArea = document.getElementById("notes");
-      const statusText = document.getElementById("statusText");
-      const content = document.querySelector(".container");
-      const overlay = document.getElementById("initialLoading");
+            .status-line {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                margin-top: 4px;
+            }
 
-      function setStatus(message, type) {
-        statusText.textContent = message;
-        statusText.className = "status-text";
-        if (type) statusText.classList.add(`status-${type}`);
-      }
+            .status-text {
+                flex: 1;
+            }
 
-      async function loadNotes() {
-        if (!userUid) return;
-        try {
-          const userDocRef = doc(db, "users", userUid);
-          const snap = await getDoc(userDocRef);
-          if (snap.exists()) {
-            const data = snap.data();
-            notesArea.value = data.notes || "";
-          } else {
-            await setDoc(userDocRef, { name: "", content: "" });
-            notesArea.value = "";
-          }
-          setStatus("All changes auto-save.", "success");
-        } catch (err) {
-          console.error("Failed to load notes:", err);
-          setStatus("Failed to load notes.", "error");
-        } finally {
-          overlay.style.display = "none";
-          content.style.visibility = "visible";
-        }
-      }
+            .status-unsaved {
+                color: #555;
+            }
 
-      async function runSave(token) {
-        if (!userUid) return;
-        const content = notesArea.value;
-        setStatus("Saving...", "saving");
-        try {
-          const userDocRef = doc(db, "users", userUid);
-          await updateDoc(userDocRef, { content });
-          if (token === latestSaveToken) {
-            setStatus("Saved.", "success");
-          }
-        } catch (err) {
-          console.error("Auto-save failed:", err);
-          if (token === latestSaveToken) {
-            setStatus("Save failed.", "error");
-          }
-        }
-      }
+            .status-saving {
+                color: #1565c0;
+            }
 
-      onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-          window.location.href = "login.html";
-          return;
-        }
-        userUid = user.uid;
-        await loadNotes();
-      });
+            .status-success {
+                color: #2e7d32;
+            }
 
-      notesArea.addEventListener("input", () => {
-        setStatus("Unsaved changes...", "unsaved");
-        if (saveTimeout) clearTimeout(saveTimeout);
-        latestSaveToken += 1;
-        const currentToken = latestSaveToken;
-        saveTimeout = setTimeout(() => runSave(currentToken), 1000);
-      });
+            .status-error {
+                color: #c62828;
+            }
 
-      document.getElementById("navHome").addEventListener("click", () => {
-        window.location.href = "dashboard.html";
-      });
-      document.getElementById("navSettings").addEventListener("click", () => {
-        window.location.href = "settings.html";
-      });
-    });
-  </script>
-</head>
-<body>
-  <header>Notes</header>
+            .spinner {
+                border: 4px solid #ccc;
+                border-top: 4px solid #2e8b57;
+                border-radius: 50%;
+                width: 18px;
+                height: 18px;
+                animation: spin 1s linear infinite;
+                display: inline-block;
+            }
 
-  <div class="top-bar" aria-label="Navigation">
-    <div id="navHome">🏠 Home</div>
-    <div id="navNotes" class="active">🗒️ Notes</div>
-    <div id="navSettings">⚙️ Settings</div>
-  </div>
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
 
-  <div class="container" aria-label="Notes">
-    <div id="initialLoading" class="overlay-loading">
-      <div class="spinner" aria-hidden="true"></div>
-      <div>Loading notes...</div>
-    </div>
+            .small {
+                font-size: 13px;
+                color: #666;
+            }
 
-    <div class="notes-wrapper">
-      <div class="note-label">Your Notes</div>
-      <textarea id="notes" placeholder="Write anything here..." disabled></textarea>
-      <div class="status-line">
-        <div id="statusText" class="status-text status-unsaved">Loading…</div>
-      </div>
-    </div>
-  </div>
+            .overlay-loading {
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                border-radius: 12px;
+                font-size: 14px;
+                gap: 8px;
+                z-index: 5;
+            }
 
-  <script>
-    const observer = new MutationObserver(() => {
-      const notes = document.getElementById("notes");
-      if (notes) notes.disabled = false;
-      observer.disconnect();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  </script>
-</body>
+            .note-actions {
+                display: flex;
+                gap: 8px;
+            }
+
+            .delete-btn {
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                padding: 4px 8px;
+                border-radius: 6px;
+                color: #c62828;
+            }
+
+            .delete-btn:hover {
+                background: rgba(198, 40, 40, 0.1);
+            }
+
+            .no-notes {
+                font-size: 14px;
+                color: #666;
+                text-align: center;
+                margin-top: 30px;
+            }
+
+            #confirmBackdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(4px);
+                display: none;
+                z-index: 900;
+            }
+
+            #confirmPopup {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.95);
+                background: #c62828;
+                color: #fff;
+                border-radius: 14px;
+                padding: 28px 24px 24px;
+                max-width: 360px;
+                width: 90%;
+                box-shadow: 0 24px 60px -10px rgba(198, 40, 40, 0.5);
+                display: none;
+                z-index: 1000;
+                overflow: hidden;
+                font-size: 15px;
+                line-height: 1.3;
+                transition: transform .25s ease;
+            }
+
+            #confirmPopup.show {
+                display: block;
+            }
+
+            #confirmPopup .close-btn {
+                position: absolute;
+                top: 10px;
+                right: 12px;
+                background: none;
+                border: none;
+                font-size: 22px;
+                color: #fff;
+                cursor: pointer;
+                line-height: 1;
+            }
+
+            #confirmPopup .title {
+                font-weight: 700;
+                margin-bottom: 8px;
+                font-size: 1.1rem;
+            }
+
+            #confirmPopup .message {
+                margin-bottom: 16px;
+            }
+
+            .confirm-buttons {
+                display: flex;
+                gap: 10px;
+            }
+
+            .confirm-cancel {
+                flex: 1;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                padding: 10px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                color: #fff;
+            }
+
+            .confirm-delete {
+                flex: 1;
+                background: #850f1f;
+                border: none;
+                padding: 10px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                color: #fff;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                * {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
+        </style>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+            import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+            import {
+                getFirestore,
+                doc,
+                getDoc,
+                setDoc,
+                updateDoc,
+                deleteField
+            } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyB9hFfCterEHOvp9Td7oxQ6BlTD_Ie7_Ws",
+                authDomain: "cfnp-b0c6d.firebaseapp.com",
+                databaseURL: "https://cfnp-b0c6d-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "cfnp-b0c6d",
+                storageBucket: "cfnp-b0c6d.appspot.com",
+                messagingSenderId: "40265217030",
+                appId: "1:40265217030:web:8e84f4eff13e6dfad17f87"
+            };
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            let userUid = null;
+            let notesData = {};
+            let saveTimers = {};
+            let titleSaveTimers = {};
+            let activeNoteId = null;
+            let isInitialLoad = true;
+            let newNoteCooldown = false;
+            const NOTE_LIMIT = 20;
+
+            let notesListEl, titleInputEl, contentEl, statusTextEl, newNoteBtn, notesContainer, counterEl;
+
+            function getFormattedTimestamp() {
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, "0");
+                return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            }
+
+            function updateNewNoteButtonState() {
+                const count = Object.keys(notesData).length;
+                if (count >= NOTE_LIMIT) {
+                    newNoteBtn.disabled = true;
+                    newNoteBtn.title = `Limit of ${NOTE_LIMIT} notes reached`;
+                } else {
+                    newNoteBtn.disabled = newNoteCooldown;
+                    newNoteBtn.title = newNoteCooldown ? "Please wait..." : "";
+                }
+                if (counterEl) counterEl.textContent = `${count} / ${NOTE_LIMIT}`;
+            }
+
+            function setStatus(message, type) {
+                statusTextEl.textContent = message;
+                statusTextEl.className = "status-text";
+                if (type) statusTextEl.classList.add(`status-${type}`);
+            }
+
+            function showTempStatus(msg, type = "error", duration = 1500) {
+                setStatus(msg, type);
+                setTimeout(() => { setStatus("All changes auto-save.", "success"); }, duration);
+            }
+
+            function makeNoteId() {
+                if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+                return 'note_' + Math.random().toString(36).substring(2, 9);
+            }
+
+            function renderNotesList() {
+                notesListEl.innerHTML = "";
+                const keys = Object.keys(notesData);
+                if (keys.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "no-notes";
+                    empty.textContent = "No notes yet. Click + New Note to start.";
+                    notesListEl.appendChild(empty);
+                } else {
+                    keys.sort((a, b) => a === activeNoteId ? -1 : b === activeNoteId ? 1 : 0);
+                    keys.forEach(noteId => {
+                        const note = notesData[noteId];
+                        const item = document.createElement("div");
+                        item.className = "note-item" + (noteId === activeNoteId ? " active" : "");
+                        item.dataset.id = noteId;
+
+                        const titleDiv = document.createElement("div");
+                        titleDiv.contentEditable = true;
+                        titleDiv.className = "note-title";
+                        titleDiv.textContent = note.name || "Untitled";
+                        titleDiv.setAttribute("aria-label", "Note title");
+                        titleDiv.addEventListener("input", () => {
+                            const newName = titleDiv.textContent.trim() || "Untitled";
+                            note.name = newName;
+                            if (noteId === activeNoteId) titleInputEl.textContent = newName;
+                            scheduleTitleSave(noteId);
+                        });
+                        titleDiv.addEventListener("blur", () => scheduleTitleSave(noteId, 0));
+                        item.appendChild(titleDiv);
+
+                        const actions = document.createElement("div");
+                        actions.className = "note-actions";
+                        const deleteBtn = document.createElement("button");
+                        deleteBtn.className = "delete-btn";
+                        deleteBtn.innerHTML = "🗑️";
+                        deleteBtn.title = "Delete note";
+                        deleteBtn.addEventListener("click", async (e) => {
+                            e.stopPropagation();
+                            const confirmed = await showConfirm("Delete this note? This can't be undone.");
+                            if (confirmed) deleteNote(noteId);
+                        });
+                        actions.appendChild(deleteBtn);
+                        item.appendChild(actions);
+
+                        item.addEventListener("click", () => {
+                            if (noteId === activeNoteId) return;
+                            switchToNote(noteId);
+                        });
+
+                        notesListEl.appendChild(item);
+                    });
+                }
+                updateNewNoteButtonState();
+            }
+
+            async function createNewNote(focus = true) {
+                if (newNoteCooldown) return;
+                const existingCount = Object.keys(notesData).length;
+                if (existingCount >= NOTE_LIMIT) {
+                    showTempStatus(`Note limit of ${NOTE_LIMIT} reached.`, "error");
+                    return;
+                }
+                newNoteCooldown = true;
+                updateNewNoteButtonState();
+
+                if (!userUid) return;
+                const id = makeNoteId();
+                const timestampName = `Note - ${getFormattedTimestamp()}`;
+                notesData[id] = { name: timestampName, content: "" };
+                try {
+                    const userDocRef = doc(db, "users", userUid);
+                    await updateDoc(userDocRef, { [`notes.${id}`]: notesData[id] });
+                } catch (err) {
+                    console.error("Failed to create note:", err);
+                    setStatus("Failed to create note.", "error");
+                }
+                switchToNote(id);
+                setTimeout(() => {
+                    newNoteCooldown = false;
+                    updateNewNoteButtonState();
+                }, 1500);
+            }
+
+            function scheduleContentSave(noteId, delay = 1000) {
+                if (saveTimers[noteId]) clearTimeout(saveTimers[noteId]);
+                setStatus("Unsaved changes...", "unsaved");
+                saveTimers[noteId] = setTimeout(() => runContentSave(noteId), delay);
+            }
+            function scheduleTitleSave(noteId, delay = 1000) {
+                if (titleSaveTimers[noteId]) clearTimeout(titleSaveTimers[noteId]);
+                setStatus("Saving title...", "saving");
+                titleSaveTimers[noteId] = setTimeout(() => runTitleSave(noteId), delay);
+            }
+
+            async function runContentSave(noteId) {
+                if (!userUid) return;
+                const note = notesData[noteId];
+                if (!note) return;
+                setStatus("Saving content...", "saving");
+                try {
+                    const userDocRef = doc(db, "users", userUid);
+                    await updateDoc(userDocRef, { [`notes.${noteId}.content`]: note.content });
+                    setStatus("Content saved.", "success");
+                } catch (err) {
+                    console.error("Content save failed:", err);
+                    setStatus("Save failed.", "error");
+                }
+            }
+
+            async function runTitleSave(noteId) {
+                if (!userUid) return;
+                const note = notesData[noteId];
+                if (!note) return;
+                try {
+                    const userDocRef = doc(db, "users", userUid);
+                    await updateDoc(userDocRef, { [`notes.${noteId}.name`]: note.name });
+                    setStatus("Title saved.", "success");
+                    renderNotesList();
+                } catch (err) {
+                    console.error("Title save failed:", err);
+                    setStatus("Title save failed.", "error");
+                }
+            }
+
+            function switchToNote(noteId) {
+                activeNoteId = noteId;
+                const note = notesData[noteId];
+                if (!note) return;
+                titleInputEl.textContent = note.name || "Untitled";
+                contentEl.value = note.content || "";
+                renderNotesList();
+                setStatus("All changes auto-save.", "success");
+            }
+
+            async function deleteNote(noteId) {
+                if (!userUid) return;
+                delete notesData[noteId];
+                try {
+                    const userDocRef = doc(db, "users", userUid);
+                    await updateDoc(userDocRef, { [`notes.${noteId}`]: deleteField() });
+                    if (noteId === activeNoteId) {
+                        const remaining = Object.keys(notesData);
+                        if (remaining.length) switchToNote(remaining[0]);
+                        else await createNewNote();
+                    } else {
+                        renderNotesList();
+                    }
+                } catch (err) {
+                    console.error("Failed to delete note:", err);
+                    setStatus("Delete failed.", "error");
+                }
+            }
+
+            async function loadNotes() {
+                if (!userUid) return;
+                try {
+                    const userDocRef = doc(db, "users", userUid);
+                    const snap = await getDoc(userDocRef);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if ((!data.notes || typeof data.notes !== "object") && (data.content !== undefined || data.name !== undefined)) {
+                            const migratedId = makeNoteId();
+                            const migrated = { name: data.name || "Untitled", content: data.content || "" };
+                            notesData = { [migratedId]: migrated };
+                            await setDoc(userDocRef, { notes: { [migratedId]: migrated } }, { merge: true });
+                        } else {
+                            notesData = (data.notes && typeof data.notes === "object") ? { ...data.notes } : {};
+                            for (const k of Object.keys(notesData)) {
+                                if (typeof notesData[k] !== "object") notesData[k] = { name: "Untitled", content: "" };
+                                else {
+                                    notesData[k].name = notesData[k].name || "Untitled";
+                                    notesData[k].content = notesData[k].content || "";
+                                }
+                            }
+                        }
+                    } else {
+                        notesData = {};
+                        await setDoc(userDocRef, { notes: {} });
+                    }
+
+                    if (Object.keys(notesData).length === 0) {
+                        await createNewNote();
+                    } else {
+                        activeNoteId = Object.keys(notesData)[0];
+                        switchToNote(activeNoteId);
+                    }
+                    renderNotesList();
+                    setStatus("All changes auto-save.", "success");
+                } catch (err) {
+                    console.error("Failed to load notes:", err);
+                    setStatus("Failed to load notes.", "error");
+                } finally {
+                    document.getElementById("initialLoading").style.display = "none";
+                    document.querySelector(".container").style.visibility = "visible";
+                    isInitialLoad = false;
+                }
+            }
+
+            function showConfirm(message) {
+                return new Promise((resolve) => {
+                    const backdrop = document.getElementById("confirmBackdrop");
+                    const popup = document.getElementById("confirmPopup");
+                    const msgEl = popup.querySelector(".message");
+                    const cancelBtn = document.getElementById("confirmCancelBtn");
+                    const deleteBtn = document.getElementById("confirmDeleteBtn");
+                    const closeBtn = document.getElementById("confirmCloseBtn");
+
+                    msgEl.textContent = message;
+                    backdrop.style.display = "block";
+                    popup.classList.add("show");
+                    requestAnimationFrame(() => {
+                        popup.style.transform = "translate(-50%, -50%) scale(1)";
+                    });
+
+                    function cleanup() {
+                        cancelBtn.removeEventListener("click", onCancel);
+                        deleteBtn.removeEventListener("click", onOk);
+                        closeBtn.removeEventListener("click", onCancel);
+                        backdrop.style.display = "none";
+                        popup.classList.remove("show");
+                        popup.style.transform = "translate(-50%, -50%) scale(0.95)";
+                    }
+
+                    function onOk() {
+                        cleanup();
+                        resolve(true);
+                    }
+                    function onCancel() {
+                        cleanup();
+                        resolve(false);
+                    }
+
+                    deleteBtn.addEventListener("click", onOk);
+                    cancelBtn.addEventListener("click", onCancel);
+                    closeBtn.addEventListener("click", onCancel);
+                    backdrop.addEventListener("click", onCancel, { once: true });
+                });
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                notesListEl = document.getElementById("notesList");
+                titleInputEl = document.getElementById("noteTitle");
+                contentEl = document.getElementById("notes");
+                statusTextEl = document.getElementById("statusText");
+                newNoteBtn = document.getElementById("newNote");
+                notesContainer = document.querySelector(".container");
+                counterEl = document.getElementById("noteCounter");
+
+                contentEl.addEventListener("input", () => {
+                    if (!activeNoteId) return;
+                    notesData[activeNoteId].content = contentEl.value;
+                    scheduleContentSave(activeNoteId);
+                });
+
+                titleInputEl.addEventListener("input", () => {
+                    if (!activeNoteId) return;
+                    const newName = titleInputEl.textContent.trim() || "Untitled";
+                    notesData[activeNoteId].name = newName;
+                    scheduleTitleSave(activeNoteId);
+                    renderNotesList();
+                });
+                titleInputEl.addEventListener("blur", () => {
+                    if (activeNoteId) scheduleTitleSave(activeNoteId, 0);
+                });
+
+                newNoteBtn.addEventListener("click", async () => {
+                    await createNewNote();
+                });
+
+                document.getElementById("navHome").addEventListener("click", () => {
+                    window.location.href = "dashboard.html";
+                });
+                document.getElementById("navSettings").addEventListener("click", () => {
+                    window.location.href = "settings.html";
+                });
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (!user) {
+                        window.location.href = "login.html";
+                        return;
+                    }
+                    userUid = user.uid;
+                    await loadNotes();
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <header>Notes</header>
+
+        <div class="top-bar" aria-label="Navigation">
+            <div id="navHome">🏠 Home</div>
+            <div id="navNotes" class="active">🗒️ Notes</div>
+            <div id="navSettings">⚙️ Settings</div>
+        </div>
+
+        <div class="main">
+            <div class="sidebar" aria-label="Notes list">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="font-weight:bold; font-size:16px;">Your Notes</div>
+                        <div class="small" id="noteCounter">0 / 20</div>
+                    </div>
+                    <button id="newNote" class="add-note-btn">+ New Note</button>
+                </div>
+                <div id="notesList" class="notes-list" aria-label="List of notes">
+                </div>
+            </div>
+
+            <div class="container" aria-label="Active note">
+                <div id="initialLoading" class="overlay-loading">
+                    <div class="spinner" aria-hidden="true"></div>
+                    <div>Loading notes...</div>
+                </div>
+
+                <div class="notes-wrapper">
+                    <div class="note-header">
+                        <div contenteditable="true" id="noteTitle" class="note-name" aria-label="Note name">Untitled</div>
+                    </div>
+                    <textarea id="notes" placeholder="Write anything here..." disabled></textarea>
+                    <div class="status-line">
+                        <div id="statusText" class="status-text status-unsaved">Loading…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmBackdrop" aria-hidden="true"></div>
+        <div id="confirmPopup" role="dialog" aria-modal="true" aria-label="Delete note confirmation">
+            <button class="close-btn" id="confirmCloseBtn" aria-label="Close">&times;</button>
+            <div class="title">Delete Note?</div>
+            <div class="message" id="confirmMessage">This can't be undone. Are you sure?</div>
+            <div class="confirm-buttons">
+                <button id="confirmCancelBtn" class="confirm-cancel">Cancel</button>
+                <button id="confirmDeleteBtn" class="confirm-delete">Delete</button>
+            </div>
+        </div>
+
+        <script>
+            const observer = new MutationObserver(() => {
+                const notes = document.getElementById("notes");
+                if (notes) notes.disabled = false;
+                observer.disconnect();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        </script>
+    </body>
 </html>
