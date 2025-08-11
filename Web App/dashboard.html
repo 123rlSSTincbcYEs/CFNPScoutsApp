@@ -326,6 +326,16 @@
       display: block;
     }
 
+    #searchMode {
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      background-color: #fff;
+      color: #222;
+      flex-shrink: 0;
+    }
+
     #confirmPopup .close-btn {
       position: absolute;
       top: 10px;
@@ -375,6 +385,49 @@
       color: #fff;
     }
 
+    .search-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .search-container .search-bar {
+      border: none;
+      outline: none;
+      flex: 1;
+      min-width: 140px;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+    }
+
+    .search-mode {
+      display: flex;
+      background: #f0f0f0;
+    }
+
+    .search-mode button {
+      border: none;
+      background: transparent;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .search-mode button.active {
+      background: var(--brand);
+      color: white;
+    }
+
+    .search-mode button:not(:last-child) {
+      border-right: 1px solid #ccc;
+    }
+
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -416,6 +469,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    let searchMode = "both";
 
     const VIEW_MODE_KEY = "dashboardViewMode";
 
@@ -586,10 +640,16 @@
           const qty = data.quantity?.total ?? "N/A";
 
           const term = searchTerm.toLowerCase();
+          const mode = document.getElementById("searchMode")?.value || "both";
           const matchesName = name.toLowerCase().includes(term);
           const matchesTags = tags.some(tag => tag.toLowerCase().includes(term));
 
-          if (matchesName || matchesTags) {
+          let matches = false;
+          if (searchMode === "name") matches = matchesName;
+          else if (searchMode === "tags") matches = matchesTags;
+          else matches = matchesName || matchesTags;
+
+          if (matches) {
             let imgSrc = data.imageBase64 || "";
             if (imgSrc) {
               if (!imgSrc.startsWith("data:image")) {
@@ -611,7 +671,7 @@
 
             card.innerHTML = `
               <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
-                <img src="${imgSrc}" alt="${name}" />
+                <img src="${imgSrc}" alt="Nil" />
                 <div class="item-details">
                   <h3>${name}</h3>
                   <p>Qty: ${qty}</p>
@@ -646,6 +706,17 @@
       searchInput.addEventListener("input", () => {
         loadItems(searchInput.value.trim());
       });
+
+      document.querySelectorAll(".search-mode button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".search-mode button").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          searchMode = btn.dataset.mode;
+          const searchInput = document.querySelector(".search-bar");
+          loadItems(searchInput.value.trim());
+        });
+      });
+
 
       document.getElementById("reloadBtn").addEventListener("click", () => {
         const searchInput = document.querySelector(".search-bar");
@@ -710,7 +781,14 @@
 
   <main>
     <div class="controls">
-      <input class="search-bar" type="text" placeholder="Search" aria-label="Search items" />
+      <div class="search-container">
+        <input class="search-bar" type="text" placeholder="Search" aria-label="Search items" />
+        <div class="search-mode" role="group" aria-label="Search mode">
+          <button data-mode="both" class="active">Both</button>
+          <button data-mode="name">Name</button>
+          <button data-mode="tags">Tags</button>
+        </div>
+      </div>
       <div class="view-modes" role="group" aria-label="View mode toggle">
         <button id="btnListView" class="active" aria-label="List view" aria-pressed="true">
           <svg viewBox="0 0 24 24" aria-hidden="true">
