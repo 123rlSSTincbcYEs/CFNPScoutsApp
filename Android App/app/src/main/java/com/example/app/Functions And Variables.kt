@@ -41,7 +41,8 @@ data class InventoryItem(
     val Name: String? = null,
     val Description: String? = null,
     val Quantity: QuantityStatus = QuantityStatus(),
-    val ImageBase64: String? = null
+    val ImageBase64: String? = null,
+    val Tags: List<String>? = null,
 )
 
 data class QuantityStatus(

@@ -82,20 +82,29 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -105,21 +114,33 @@ import kotlinx.coroutines.tasks.await
 import java.io.File
 import com.yalantis.ucrop.UCrop
 
+@ExperimentalLayoutApi
 @Composable
-fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: String?, imageBase64: String?, fullItem: Map<String, Any>?, navController: NavController) {
+fun ItemUI(
+    name: String,
+    description: String,
+    quantity: Int?,
+    dd: Long?,
+    id: String?,
+    imageBase64: String?,
+    fullItem: Map<String, Any>?,
+    tags: List<String>?,
+    navController: NavController
+) {
     var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
     var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
+
     if (imageBase64 != null) {
-        bitmapImage = base64ToBitmap(imageBase64.toString())
+        bitmapImage = base64ToBitmap(imageBase64)
     }
-    colourScheme = if (dd == null) {
-        Color(0xFF306bb1)
-    } else if (dd <= 5) {
-        Color(0xFFe03024)
-    } else {
-        Color(0xFF2e8b57)
+
+    colourScheme = when {
+        dd == null -> Color(0xFF306bb1)
+        dd <= 5 -> Color(0xFFe03024)
+        else -> Color(0xFF2e8b57)
     }
+
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -130,8 +151,7 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
-            modifier = Modifier
-                .padding(12.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.Top,
@@ -171,6 +191,43 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                     Text("Qty: $quantity")
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(description)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (!tags.isNullOrEmpty()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val maxTagsToShow = 1
+                            val limitedTags = tags.take(maxTagsToShow)
+
+                            limitedTags.forEach { tag ->
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = Color(0xFFD3F5A5),
+                                            shape = RoundedCornerShape(50)
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(tag, fontSize = 12.sp, color = colourButton)
+                                }
+                            }
+
+                            if (tags.size > maxTagsToShow) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = Color(0xFFE0E0E0),
+                                            shape = RoundedCornerShape(50)
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("...", fontSize = 12.sp, color = Color.Gray)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Column(
@@ -195,10 +252,7 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                             DropdownMenuItem(
                                 text = { Text("Edit") },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = "Edit"
-                                    )
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
                                 },
                                 onClick = {
                                     expanded = false
@@ -209,10 +263,7 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                             DropdownMenuItem(
                                 text = { Text("View Details") },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Outlined.Info,
-                                        contentDescription = "View Details"
-                                    )
+                                    Icon(Icons.Outlined.Info, contentDescription = "View Details")
                                 },
                                 onClick = {
                                     expanded = false
@@ -224,10 +275,7 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
                             DropdownMenuItem(
                                 text = { Text("Delete") },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Delete"
-                                    )
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
                                 },
                                 onClick = {
                                     expanded = false
@@ -259,6 +307,82 @@ fun ItemUI(name: String, description: String, quantity: Int?, dd: Long?,id: Stri
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun TagDialog(
+    tags: List<String>,
+    onTagsChange: (List<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newTag by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Manage Tags") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = newTag,
+                    onValueChange = { newTag = it },
+                    label = { Text("Add Tag") },
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            val trimmedTag = newTag.trim()
+                            if (trimmedTag.isNotBlank()) {
+                                if (tags.any { it.equals(trimmedTag, ignoreCase = true) }) {
+                                    Toast.makeText(context, "Tag already exists", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    onTagsChange(tags + trimmedTag)
+                                    newTag = ""
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "Add Tag")
+                        }
+                    },
+                    singleLine = true
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    tags.forEachIndexed { index, tag ->
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFD3F5A5), RoundedCornerShape(50))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(tag, fontSize = 12.sp, color = Color.Black)
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    modifier = Modifier
+                                        .size(14.dp)
+                                        .clickable {
+                                            onTagsChange(tags.toMutableList().also { it.removeAt(index) })
+                                        }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Done")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var itemName by remember { mutableStateOf("") }
@@ -268,6 +392,8 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var normal by remember { mutableIntStateOf(0) }
     var damaged by remember { mutableIntStateOf(0) }
     var missing by remember { mutableIntStateOf(0) }
+    var tags by remember { mutableStateOf<List<String>>(emptyList()) }
+    var showTagDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     imageUrl = ""
 
@@ -281,6 +407,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
             damaged = (quantityMap?.get("damaged") as? Long)?.toInt() ?: 0
             missing = (quantityMap?.get("missing") as? Long)?.toInt() ?: 0
             quantity = normal + damaged + missing
+            tags = (currentItem!!["tags"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
         }
     }
 
@@ -291,6 +418,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     ) { paddingValues ->
         Column(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -375,6 +503,36 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                             .fillMaxWidth()
                             .height(120.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = { showTagDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
+                        shape = RoundedCornerShape(30),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Icon(Icons.Default.Label, contentDescription = "Tags", tint = Color.White)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Edit Tags (${tags.size})", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (tags.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            tags.forEach { tag ->
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFD3F5A5), RoundedCornerShape(50))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(tag, fontSize = 12.sp, color = Color.Black)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -401,7 +559,6 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
 
                     FilledTonalButton(
                         onClick = {
-                            Log.d("NewItemUi", "ImageBase64: $base64image")
                             if (itemName.isEmpty() || itemDescription.isEmpty() || normal + damaged + missing == 0) {
                                 Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_LONG).show()
                             } else {
@@ -415,7 +572,8 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                             missing = missing,
                                             total = normal + damaged + missing
                                         ),
-                                        ImageBase64 = imageBase64 ?: currentItem?.get("ImageBase64") as? String
+                                        ImageBase64 = imageBase64 ?: currentItem?.get("ImageBase64") as? String,
+                                        Tags = tags
                                     )
 
                                     if (edit == true) {
@@ -428,11 +586,8 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                                     navController.navigate("dashboard")
                                                 }
                                                 .addOnFailureListener { e ->
-                                                    Log.d("NewItemUi", "Failed to update item: ${e.localizedMessage}")
                                                     Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                                 }
-                                        } else {
-                                            Toast.makeText(context, "No document ID found", Toast.LENGTH_LONG).show()
                                         }
                                     } else {
                                         db.collection("items")
@@ -442,14 +597,12 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                                 navController.navigate("dashboard")
                                             }
                                             .addOnFailureListener { e ->
-                                                Log.d("NewItemUi", "Failed to create item: ${e.localizedMessage}")
                                                 Toast.makeText(context, "Failed to create item: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                             }
                                     }
                                     imageUrl = null
                                 }
-
-                                saveToFirestore(imageBase64 = base64image)
+                                saveToFirestore(base64image)
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2e8b57)),
@@ -465,6 +618,14 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                 }
             }
         }
+    }
+
+    if (showTagDialog) {
+        TagDialog(
+            tags = tags,
+            onTagsChange = { tags = it },
+            onDismiss = { showTagDialog = false }
+        )
     }
 }
 
@@ -593,6 +754,7 @@ fun ViewItemUi(navController: NavController) {
     var missing by remember { mutableIntStateOf(0) }
     var quantity by remember { mutableIntStateOf(0) }
     var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
+    var tags by remember { mutableStateOf<List<String>>(emptyList()) }
 
     val context = LocalContext.current
 
@@ -607,6 +769,7 @@ fun ViewItemUi(navController: NavController) {
             quantity = normal + damaged + missing
             val imageBase64 = it["imageBase64"] as? String
             bitmapImage = base64ToBitmap(imageBase64.toString())
+            tags = (it["tags"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
         }
     }
 
@@ -683,7 +846,44 @@ fun ViewItemUi(navController: NavController) {
                 readOnly = true
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            if (tags.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val maxTagsToShow = 7
+                    val limitedTags = tags.take(maxTagsToShow)
+
+                    limitedTags.forEach { tag ->
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = Color(0xFFD3F5A5),
+                                    shape = RoundedCornerShape(50)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(tag, fontSize = 12.sp, color = colourButton)
+                        }
+                    }
+
+                    if (tags.size > maxTagsToShow) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = Color(0xFFE0E0E0),
+                                    shape = RoundedCornerShape(50)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("...", fontSize = 12.sp, color = Color.Gray)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             FilledTonalButton(
                 onClick = { navController.popBackStack() },
