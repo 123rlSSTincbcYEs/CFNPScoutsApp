@@ -259,7 +259,6 @@
       margin: 0 auto;
     }
 
-    /* Global More Menu */
     .more-menu-global {
       position: fixed;
       background: var(--surface);
@@ -292,6 +291,88 @@
       background-color: var(--brand);
       color: white;
       outline: none;
+    }
+
+    #confirmBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+      display: none;
+      z-index: 900;
+    }
+
+    #confirmPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: #c62828;
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 24px 24px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 24px 60px -10px rgba(198, 40, 40, 0.5);
+      display: none;
+      z-index: 1000;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.3;
+      transition: transform .25s ease;
+    }
+
+    #confirmPopup.show {
+      display: block;
+    }
+
+    #confirmPopup .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #fff;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #confirmPopup .title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    #confirmPopup .message {
+      margin-bottom: 16px;
+    }
+
+    .confirm-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .confirm-cancel {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .confirm-delete {
+      flex: 1;
+      background: #850f1f;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #fff;
     }
 
     @keyframes fadeIn {
@@ -418,16 +499,59 @@
         closeMoreMenu();
       };
       globalMoreMenu.querySelector(".delete-btn").onclick = async () => {
-        const confirmDelete = confirm(`Are you sure you want to delete "${itemDoc.data().name}"?`);
+        const confirmDelete = await showConfirm(`Are you sure you want to delete "${itemDoc.data().name}"?`);
         if (!confirmDelete) return;
         try {
           await deleteDoc(doc(db, "items", itemDoc.id));
+          const searchInput = document.querySelector(".search-bar");
+          loadItems(searchInput.value.trim());
           if (currentMenuCard) currentMenuCard.remove();
           closeMoreMenu();
         } catch (error) {
           alert("Error deleting item: " + error.message);
         }
       };
+    }
+
+    function showConfirm(message) {
+      return new Promise((resolve) => {
+        const backdrop = document.getElementById("confirmBackdrop");
+        const popup = document.getElementById("confirmPopup");
+        const msgEl = popup.querySelector(".message");
+        const cancelBtn = document.getElementById("confirmCancelBtn");
+        const deleteBtn = document.getElementById("confirmDeleteBtn");
+        const closeBtn = document.getElementById("confirmCloseBtn");
+
+        msgEl.textContent = message;
+        backdrop.style.display = "block";
+        popup.classList.add("show");
+        requestAnimationFrame(() => {
+          popup.style.transform = "translate(-50%, -50%) scale(1)";
+        });
+
+        function cleanup() {
+          cancelBtn.removeEventListener("click", onCancel);
+          deleteBtn.removeEventListener("click", onOk);
+          closeBtn.removeEventListener("click", onCancel);
+          backdrop.style.display = "none";
+          popup.classList.remove("show");
+          popup.style.transform = "translate(-50%, -50%) scale(0.95)";
+        }
+
+        function onOk() {
+          cleanup();
+          resolve(true);
+        }
+        function onCancel() {
+          cleanup();
+          resolve(false);
+        }
+
+        deleteBtn.addEventListener("click", onOk);
+        cancelBtn.addEventListener("click", onCancel);
+        closeBtn.addEventListener("click", onCancel);
+        backdrop.addEventListener("click", onCancel, { once: true });
+      });
     }
 
     document.addEventListener("click", (e) => {
@@ -461,7 +585,6 @@
           const desc = data.description || "";
           const qty = data.quantity?.total ?? "N/A";
 
-          // Convert to lowercase for matching
           const term = searchTerm.toLowerCase();
           const matchesName = name.toLowerCase().includes(term);
           const matchesTags = tags.some(tag => tag.toLowerCase().includes(term));
@@ -480,7 +603,6 @@
             card.className = "item-card";
             card.setAttribute("data-id", itemDoc.id);
 
-            // Generate tags HTML
             const tagsHtml = tags.length
               ? `<p class="tags" style="margin-top:4px; font-size:0.8rem; color:#2e8b57;">
                Tags: ${tags.map(tag => `<span style="background:#e6f4ea; padding:2px 6px; border-radius:4px; margin-right:4px;">${tag}</span>`).join("")}
@@ -488,17 +610,17 @@
               : "";
 
             card.innerHTML = `
-          <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
-            <img src="${imgSrc}" alt="${name}" />
-            <div class="item-details">
-              <h3>${name}</h3>
-              <p>Qty: ${qty}</p>
-              <p>${desc}</p>
-              ${tagsHtml}
-            </div>
-          </div>
-          <button class="more-options" aria-label="More options for ${name}">⋮</button>
-        `;
+              <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:0;">
+                <img src="${imgSrc}" alt="${name}" />
+                <div class="item-details">
+                  <h3>${name}</h3>
+                  <p>Qty: ${qty}</p>
+                  <p>${desc}</p>
+                  ${tagsHtml}
+                </div>
+              </div>
+              <button class="more-options" aria-label="More options for ${name}">⋮</button>
+            `;
 
             const moreBtn = card.querySelector(".more-options");
             moreBtn.addEventListener("click", (e) => {
@@ -621,6 +743,16 @@
         </svg>
         Add Item
       </button>
+    </div>
+    <div id="confirmBackdrop" aria-hidden="true"></div>
+    <div id="confirmPopup" role="dialog" aria-modal="true" aria-label="Sign out confirmation">
+      <button class="close-btn" id="confirmCloseBtn" aria-label="Close">&times;</button>
+      <div class="title">Delete Item?</div>
+      <div class="message" id="confirmMessage"></div>
+      <div class="confirm-buttons">
+        <button id="confirmCancelBtn" class="confirm-cancel">Cancel</button>
+        <button id="confirmDeleteBtn" class="confirm-delete">Delete</button>
+      </div>
     </div>
   </main>
 </body>

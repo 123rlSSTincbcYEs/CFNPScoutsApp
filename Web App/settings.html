@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Settings</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -30,7 +34,7 @@
       align-items: center;
       background-color: #ffffff;
       padding: 0.5rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -60,7 +64,7 @@
       background: white;
       border-radius: 12px;
       padding: 30px 25px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
       position: relative;
     }
 
@@ -122,52 +126,52 @@
     }
 
     :root {
-  --logout-bg: #c62828;
-  --logout-bg-hover: #b71c1c; 
-  --logout-text: #ffffff;
-  --logout-radius: 12px;
-  --logout-padding: 14px;
-  --logout-transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      --logout-bg: #c62828;
+      --logout-bg-hover: #b71c1c;
+      --logout-text: #ffffff;
+      --logout-radius: 12px;
+      --logout-padding: 14px;
+      --logout-transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .logout-btn {
-    width: 100%;
-    padding: var(--logout-padding);
-    background-color: var(--logout-bg);
-    color: var(--logout-text);
-    font-size: 16px;
-    border: none;
-    border-radius: var(--logout-radius);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    transition: var(--logout-transition);
-    position: relative;
+      width: 100%;
+      padding: var(--logout-padding);
+      background-color: var(--logout-bg);
+      color: var(--logout-text);
+      font-size: 16px;
+      border: none;
+      border-radius: var(--logout-radius);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      transition: var(--logout-transition);
+      position: relative;
     }
 
     .logout-btn:hover {
-    background-color: var(--logout-bg-hover);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      background-color: var(--logout-bg-hover);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
 
     .logout-btn:focus-visible {
-    outline: 3px solid #ffffff;
-    outline-offset: 2px;
+      outline: 3px solid #ffffff;
+      outline-offset: 2px;
     }
 
     .logout-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+      transform: translateY(1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
     }
 
     /* Honor reduce motion preference */
     @media (prefers-reduced-motion: reduce) {
-    .logout-btn {
+      .logout-btn {
         transition: none;
-    }
+      }
     }
 
     .small {
@@ -193,7 +197,9 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .notice {
@@ -217,6 +223,88 @@
 
     .status-error {
       color: #c62828;
+    }
+
+    #confirmBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+      display: none;
+      z-index: 900;
+    }
+
+    #confirmPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: #c62828;
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 24px 24px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 24px 60px -10px rgba(198, 40, 40, 0.5);
+      display: none;
+      z-index: 1000;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.3;
+      transition: transform .25s ease;
+    }
+
+    #confirmPopup.show {
+      display: block;
+    }
+
+    #confirmPopup .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #fff;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #confirmPopup .title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    #confirmPopup .message {
+      margin-bottom: 16px;
+    }
+
+    .confirm-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .confirm-cancel {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .confirm-delete {
+      flex: 1;
+      background: #850f1f;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #fff;
     }
   </style>
   <script type="module">
@@ -331,7 +419,7 @@
       });
 
       logoutBtn.addEventListener("click", async () => {
-        const confirmed = confirm("Are you sure you want to log out?");
+        const confirmed = await showConfirm("Are you sure you want to log out?");
         if (!confirmed) return;
 
         logoutBtn.disabled = true;
@@ -351,6 +439,47 @@
         }
       });
 
+      function showConfirm(message) {
+        return new Promise((resolve) => {
+          const backdrop = document.getElementById("confirmBackdrop");
+          const popup = document.getElementById("confirmPopup");
+          const msgEl = popup.querySelector(".message");
+          const cancelBtn = document.getElementById("confirmCancelBtn");
+          const deleteBtn = document.getElementById("confirmDeleteBtn");
+          const closeBtn = document.getElementById("confirmCloseBtn");
+
+          msgEl.textContent = message;
+          backdrop.style.display = "block";
+          popup.classList.add("show");
+          requestAnimationFrame(() => {
+            popup.style.transform = "translate(-50%, -50%) scale(1)";
+          });
+
+          function cleanup() {
+            cancelBtn.removeEventListener("click", onCancel);
+            deleteBtn.removeEventListener("click", onOk);
+            closeBtn.removeEventListener("click", onCancel);
+            backdrop.style.display = "none";
+            popup.classList.remove("show");
+            popup.style.transform = "translate(-50%, -50%) scale(0.95)";
+          }
+
+          function onOk() {
+            cleanup();
+            resolve(true);
+          }
+          function onCancel() {
+            cleanup();
+            resolve(false);
+          }
+
+          deleteBtn.addEventListener("click", onOk);
+          cancelBtn.addEventListener("click", onCancel);
+          closeBtn.addEventListener("click", onCancel);
+          backdrop.addEventListener("click", onCancel, { once: true });
+        });
+      }
+
       document.getElementById("navHome").addEventListener("click", () => {
         window.location.href = "dashboard.html";
       });
@@ -363,6 +492,7 @@
     });
   </script>
 </head>
+
 <body>
   <header>Settings</header>
 
@@ -398,5 +528,16 @@
       <div id="statusText" class="small center" aria-live="polite"></div>
     </div>
   </div>
+  <div id="confirmBackdrop" aria-hidden="true"></div>
+  <div id="confirmPopup" role="dialog" aria-modal="true" aria-label="Sign out confirmation">
+    <button class="close-btn" id="confirmCloseBtn" aria-label="Close">&times;</button>
+    <div class="title">Log Out?</div>
+    <div class="message" id="confirmMessage"></div>
+    <div class="confirm-buttons">
+      <button id="confirmCancelBtn" class="confirm-cancel">Cancel</button>
+      <button id="confirmDeleteBtn" class="confirm-delete">Log Out</button>
+    </div>
+  </div>
 </body>
+
 </html>
