@@ -79,8 +79,9 @@ fun RootApp() {
         composable("dashboard") {
             DashboardTApp(navController)
         }
-        composable("notes") {
-            Notes(navController)
+        composable("notes") { NotesListScreen(navController) }
+        composable("noteEditor") { backStackEntry ->
+            NoteEditorScreen(navController)
         }
         composable("settings") {
             Settings(navController)

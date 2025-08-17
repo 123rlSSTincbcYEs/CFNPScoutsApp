@@ -85,11 +85,16 @@ import android.util.Base64
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -99,16 +104,23 @@ import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import java.io.File
@@ -977,64 +989,240 @@ fun ImagePickerBox(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Notes(navController: NavController) {
+fun NotesListScreen(navController: NavController) {
+    val uid = auth.currentUser?.uid
+    var notes by remember { mutableStateOf<Map<String, Note>>(emptyMap()) }
+    var showRenameDialog by remember { mutableStateOf<String?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newName by remember { mutableStateOf("") }
+
+    LaunchedEffect(uid) {
+        if (uid != null) {
+            db.collection("users").document(uid).addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.exists()) {
+                    notes = (snapshot.get("notes") as? Map<*, *>)?.mapNotNull { entry ->
+                        val id = entry.key as? String ?: return@mapNotNull null
+                        val map = entry.value as? Map<*, *> ?: return@mapNotNull null
+                        val name = map["name"] as? String ?: "Untitled Note"
+                        val content = map["content"] as? String ?: ""
+                        id to Note(name, content)
+                    }?.toMap() ?: emptyMap()
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    if (notes.size >= 20) {
+                        return@FloatingActionButton
+                    }
+                    newName = ""
+                    showAddDialog = true
+                },
+                containerColor = colourButton
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Note", tint = Color.White)
+            }
+        },
+        containerColor = colourBackground,
+        bottomBar = { BottomNavBar(navController) }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            item {
+                Text(
+                    "Your Notes ${notes.size}/20",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 32.sp,
+                    color = colourSecondaryText,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+
+            items(notes.toList()) { (noteId, note) ->
+                var expanded by remember { mutableStateOf(false) }
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = colourSecondary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("noteId", noteId)
+                            navController.navigate("noteEditor")
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = note.name,
+                            color = colourSecondaryText,
+                            fontSize = 16.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Box {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = colourSecondaryText)
+                            }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Rename") },
+                                    onClick = {
+                                        expanded = false
+                                        showRenameDialog = noteId
+                                        newName = note.name
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete") },
+                                    onClick = {
+                                        expanded = false
+                                        if (uid != null) {
+                                            db.collection("users").document(uid)
+                                                .update("notes.$noteId", FieldValue.delete())
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val noteId = System.currentTimeMillis().toString()
+                    val newNote = mapOf("name" to newName.ifBlank { "Untitled Note" }, "content" to "")
+                    if (uid != null) {
+                        db.collection("users").document(uid)
+                            .update("notes.$noteId", newNote)
+                    }
+                    showAddDialog = false
+                }) { Text("Add") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddDialog = false }) { Text("Cancel") }
+            },
+            title = { Text("New Note") },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("Note name") },
+                    singleLine = true
+                )
+            }
+        )
+    }
+
+    if (showRenameDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = showRenameDialog!!
+                    if (uid != null) {
+                        db.collection("users").document(uid)
+                            .update("notes.$id.name", newName)
+                    }
+                    showRenameDialog = null
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = null }) { Text("Cancel") }
+            },
+            title = { Text("Rename Note") },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("New name") },
+                    singleLine = true
+                )
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NoteEditorScreen(navController: NavController) {
+    val uid = auth.currentUser?.uid
+    val noteId = navController.previousBackStackEntry?.savedStateHandle?.get<String>("noteId")
     var content by remember { mutableStateOf("") }
     var saveStatus by remember { mutableStateOf("Saved") }
     var isInitialized by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        val uid = auth.currentUser?.uid
-        if (uid != null) {
+    LaunchedEffect(noteId) {
+        if (uid != null && noteId != null) {
             val snapshot = db.collection("users").document(uid).get().await()
-            if (snapshot.exists()) {
-                content = snapshot.getString("content") ?: ""
-            }
+            val notesMap = snapshot.get("notes") as? Map<*, *> ?: emptyMap<Any, Any>()
+            val noteMap = notesMap[noteId] as? Map<*, *>
+            content = noteMap?.get("content") as? String ?: ""
         }
         isInitialized = true
     }
 
     LaunchedEffect(content) {
-        Log.d("Notes", "Content changed: $content")
-        if (!isInitialized) return@LaunchedEffect
+        if (!isInitialized || noteId == null || uid == null) return@LaunchedEffect
+
         saveStatus = "Not Saved"
         delay(1000)
-        val uid = auth.currentUser?.uid
-        Log.d("Notes", "UID: $uid")
-        if (uid != null) {
-            db.collection("users").document(uid)
-                .update("content", content)
-                .addOnSuccessListener { saveStatus = "Saved" }
-                .addOnFailureListener { saveStatus = "Save Failed" }
-        }
+
+        db.collection("users").document(uid)
+            .update("notes.$noteId.content", content)
+            .addOnSuccessListener { saveStatus = "Saved" }
+            .addOnFailureListener { saveStatus = "Save Failed" }
     }
 
     Scaffold(
-        bottomBar = { BottomNavBar(navController) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit Note") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colourSecondary)
+            )
+        },
         containerColor = colourBackground
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(16.dp)
                 .fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
-
-            Text(
-                text = "Notes",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                fontSize = 40.sp,
-                modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-
             OutlinedTextField(
                 value = content,
                 onValueChange = { content = it },
-                label = { Text("Notes") },
+                label = { Text("Write your note here...") },
                 textStyle = TextStyle(fontSize = 14.sp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = colourSecondary,
@@ -1043,13 +1231,11 @@ fun Notes(navController: NavController) {
                     unfocusedTextColor = colourSecondaryText,
                     focusedBorderColor = colourSecondaryText,
                     unfocusedBorderColor = colourSecondaryText,
-                    focusedLabelColor = colourSecondaryText,
-                    unfocusedLabelColor = colourSecondaryText,
-                    cursorColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp)
+                    .weight(1f)
             )
 
             Text(
@@ -1061,12 +1247,8 @@ fun Notes(navController: NavController) {
                     "Save Failed" -> Color.Red
                     else -> Color.Unspecified
                 },
-                modifier = Modifier
-                    .padding(top = 4.dp)
-                    .align(Alignment.Start)
+                modifier = Modifier.padding(top = 8.dp)
             )
-
-            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }

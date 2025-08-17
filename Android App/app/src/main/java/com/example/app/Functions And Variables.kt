@@ -58,6 +58,11 @@ data class BottomNavItem(
     val route:String,
 )
 
+data class Note(
+    val name: String = "",
+    val content: String = ""
+)
+
 val BottomNavItems = listOf(
     BottomNavItem(
         label = "Home",
