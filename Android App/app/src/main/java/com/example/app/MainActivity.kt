@@ -12,6 +12,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +53,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import com.google.firebase.firestore.DocumentReference
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -110,164 +112,139 @@ fun LoginApp(navController: NavController) {
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
     var isLoading by remember { mutableStateOf(false) }
-    var authFailed by remember { mutableStateOf(false)}
-    var message by remember { mutableStateOf<String?>(null) }
 
     val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(username).matches()
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colourBackground),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(painter = painterResource(id = R.drawable.fearlessfalcons), contentDescription = "Logo")
-        Spacer(Modifier.height(10.dp))
-        LoadingOverlay(isLoading = isLoading)
-        Text("Login", fontSize = 64.sp)
-        Spacer(modifier = Modifier.height(16.dp))
+    val loginWithPassword = {
+        isLoading = true
+        auth.signInWithEmailAndPassword(username, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
+                    val userDocRef = db.collection("users").document(uid)
 
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Email") },
-            singleLine = true,
-            isError = username.isNotEmpty() && !isValidEmail,
-            supportingText = {
-                if (username.isNotEmpty() && !isValidEmail) {
-                    Text("Invalid email address", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            modifier = Modifier
-                .padding(8.dp)
-                .width(300.dp),
-            textStyle = TextStyle(fontSize = 18.sp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = colourSecondary,
-                unfocusedContainerColor = colourSecondary,
-                focusedTextColor = colourSecondaryText,
-                unfocusedTextColor = colourSecondaryText,
-                focusedBorderColor = colourSecondaryText,
-                unfocusedBorderColor = colourSecondaryText,
-                focusedLabelColor = colourSecondaryText,
-                unfocusedLabelColor = colourSecondaryText,
-                cursorColor = colourSecondaryText,
-            )
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true,
-            modifier = Modifier
-                .padding(8.dp)
-                .width(300.dp),
-            textStyle = TextStyle(fontSize = 18.sp),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    if (isValidEmail and password.isNotEmpty()) {
-                        isLoading = true
-                        auth.signInWithEmailAndPassword(username, password)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
-                                        .show()
-                                    db.collection("users").document(auth.currentUser?.uid.toString()).get()
-                                        .addOnSuccessListener { documentSnapshot ->
-                                            if (!documentSnapshot.exists()) {
-                                                db.collection("users").document(auth.currentUser?.uid.toString())
-                                                    .set(mapOf("name" to auth.currentUser?.uid.toString()))
-                                            }
-                                        }
-                                        .addOnFailureListener { exception ->
-                                            Log.e("Firestore", "Error getting document: ", exception)
-                                        }
-
-                                    navController.navigate("dashboard")
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        task.exception?.message ?: "Authentication failed.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    authFailed = true
-                                    message = task.exception?.message
-                                }
-                                isLoading = false
-                                username = ""
-                                password = ""
+                    userDocRef.get()
+                        .addOnSuccessListener { doc ->
+                            if (!doc.exists()) {
+                                userDocRef.set(mapOf("2faEnabled" to true))
+                            } else if (doc.getBoolean("2faEnabled") == null) {
+                                userDocRef.update("2faEnabled", true)
                             }
-                    } else {
-                        Toast.makeText(context, "Invalid Email or No Password Entered", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = colourSecondary,
-                unfocusedContainerColor = colourSecondary,
-                focusedTextColor = colourSecondaryText,
-                unfocusedTextColor = colourSecondaryText,
-                focusedBorderColor = colourSecondaryText,
-                unfocusedBorderColor = colourSecondaryText,
-                focusedLabelColor = colourSecondaryText,
-                unfocusedLabelColor = colourSecondaryText,
-                cursorColor = colourSecondaryText
-            )
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        FilledTonalButton(
-            shape = RoundedCornerShape(30),
-            onClick = {
-                if (isValidEmail and password.isNotEmpty()) {
-                    isLoading = true
-                    auth.signInWithEmailAndPassword(username, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT)
-                                    .show()
-                                navController.navigate("dashboard")
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    task.exception?.message ?: "Authentication failed.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                authFailed = true
-                                message = task.exception?.message
-                            }
+                            navController.navigate("dashboard")
                             isLoading = false
-                            username = ""
-                            password = ""
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            isLoading = false
                         }
                 } else {
-                    Toast.makeText(context, "Invalid Email or No Password Entered", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, task.exception?.message ?: "Login failed", Toast.LENGTH_SHORT).show()
+                    isLoading = false
                 }
-            },
-            enabled = !isLoading,
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = colourButton,
-                contentColor = colourBackground
-            ),
+
+                username = ""
+                password = ""
+            }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .padding(14.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .fillMaxWidth()
-                .height(56.dp),
+                .fillMaxSize()
+                .background(colourBackground),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Image(painter = painterResource(id = R.drawable.fearlessfalcons), contentDescription = "Logo")
+            Spacer(Modifier.height(10.dp))
+
+            Text("Login", fontSize = 64.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Email") },
+                singleLine = true,
+                isError = username.isNotEmpty() && !isValidEmail,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .width(300.dp),
+                textStyle = TextStyle(fontSize = 18.sp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colourSecondary,
+                    unfocusedContainerColor = colourSecondary,
+                    focusedTextColor = colourSecondaryText,
+                    unfocusedTextColor = colourSecondaryText,
+                    focusedBorderColor = colourSecondaryText,
+                    unfocusedBorderColor = colourSecondaryText,
+                    focusedLabelColor = colourSecondaryText,
+                    unfocusedLabelColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText,
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .width(300.dp),
+                textStyle = TextStyle(fontSize = 18.sp),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { if (isValidEmail && password.isNotEmpty()) loginWithPassword() }
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colourSecondary,
+                    unfocusedContainerColor = colourSecondary,
+                    focusedTextColor = colourSecondaryText,
+                    unfocusedTextColor = colourSecondaryText,
+                    focusedBorderColor = colourSecondaryText,
+                    unfocusedBorderColor = colourSecondaryText,
+                    focusedLabelColor = colourSecondaryText,
+                    unfocusedLabelColor = colourSecondaryText,
+                    cursorColor = colourSecondaryText
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            FilledTonalButton(
+                shape = RoundedCornerShape(30),
+                onClick = { if (isValidEmail && password.isNotEmpty()) loginWithPassword() },
+                enabled = !isLoading,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colourButton,
+                    contentColor = colourBackground
+                ),
+                modifier = Modifier
+                    .padding(14.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .fillMaxWidth()
+                    .height(56.dp),
+            ) {
+                Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colourBackground.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
         }
     }
 }
+

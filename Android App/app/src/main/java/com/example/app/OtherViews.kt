@@ -1122,20 +1122,36 @@ fun NotesListScreen(navController: NavController) {
                             .update("notes.$noteId", newNote)
                     }
                     showAddDialog = false
-                }) { Text("Add") }
+                }) {
+                    Text("Add", color = colourButton)
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showAddDialog = false }) {
+                    Text("Cancel", color = colourSecondaryText)
+                }
             },
-            title = { Text("New Note") },
+            title = {
+                Text("New Note", color = colourSecondaryText)
+            },
             text = {
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
-                    label = { Text("Note name") },
-                    singleLine = true
+                    label = { Text("Note name", color = colourSecondaryText) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = colourSecondary,
+                        unfocusedContainerColor = colourSecondary,
+                        focusedTextColor = colourSecondaryText,
+                        unfocusedTextColor = colourSecondaryText,
+                        focusedBorderColor = colourSecondaryText,
+                        unfocusedBorderColor = colourSecondaryText,
+                        cursorColor = colourSecondaryText
+                    )
                 )
-            }
+            },
+            containerColor = colourBackground
         )
     }
 
@@ -1150,20 +1166,36 @@ fun NotesListScreen(navController: NavController) {
                             .update("notes.$id.name", newName)
                     }
                     showRenameDialog = null
-                }) { Text("Save") }
+                }) {
+                    Text("Save", color = colourButton)
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showRenameDialog = null }) { Text("Cancel") }
+                TextButton(onClick = { showRenameDialog = null }) {
+                    Text("Cancel", color = colourSecondaryText)
+                }
             },
-            title = { Text("Rename Note") },
+            title = {
+                Text("Rename Note", color = colourSecondaryText)
+            },
             text = {
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
-                    label = { Text("New name") },
-                    singleLine = true
+                    label = { Text("New name", color = colourSecondaryText) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = colourSecondary,
+                        unfocusedContainerColor = colourSecondary,
+                        focusedTextColor = colourSecondaryText,
+                        unfocusedTextColor = colourSecondaryText,
+                        focusedBorderColor = colourSecondaryText,
+                        unfocusedBorderColor = colourSecondaryText,
+                        cursorColor = colourSecondaryText
+                    )
                 )
-            }
+            },
+            containerColor = colourBackground
         )
     }
 }
