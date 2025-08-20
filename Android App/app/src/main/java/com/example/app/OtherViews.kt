@@ -2,6 +2,7 @@ package com.example.app
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -82,10 +83,17 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.util.Base64
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -99,7 +107,9 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -112,6 +122,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -1287,139 +1298,187 @@ fun NoteEditorScreen(navController: NavController) {
 
 @Composable
 fun Settings(navController: NavController) {
+    var popupMessage by remember { mutableStateOf("") }
+
     Scaffold(
         bottomBar = { BottomNavBar(navController) },
         containerColor = colourBackground
     ) { innerPadding ->
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
-            var name by remember { mutableStateOf("") }
-            var saveStatus by remember { mutableStateOf("Saved") }
-
-            LaunchedEffect(Unit) {
-                val uid = auth.currentUser?.uid
-                if (uid != null) {
-                    val snapshot = db.collection("users").document(uid).get().await()
-                    if (snapshot.exists()) {
-                        name = snapshot.getString("name") ?: ""
-                    }
-                }
-            }
-
-            LaunchedEffect(name) {
-                saveStatus = "Not Saved"
-                delay(1000)
-                val uid = auth.currentUser?.uid
-                if (uid != null) {
-                    db.collection("users").document(uid)
-                        .update("name", name)
-                        .addOnSuccessListener { saveStatus = "Saved" }
-                        .addOnFailureListener { saveStatus = "Save Failed" }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            Text(
-                text = "Settings",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                fontSize = 40.sp,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                singleLine = true,
-                textStyle = TextStyle(fontSize = 14.sp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = colourSecondary,
-                    unfocusedContainerColor = colourSecondary,
-                    focusedTextColor = colourSecondaryText,
-                    unfocusedTextColor = colourSecondaryText,
-                    focusedBorderColor = colourSecondaryText,
-                    unfocusedBorderColor = colourSecondaryText,
-                    focusedLabelColor = colourSecondaryText,
-                    unfocusedLabelColor = colourSecondaryText,
-                    cursorColor = colourSecondaryText,
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Text(
-                text = saveStatus,
-                fontSize = 12.sp,
-                color = when (saveStatus) {
-                    "Saved" -> colourButton
-                    "Not Saved" -> colourSecondaryText
-                    "Save Failed" -> Color.Red
-                    else -> Color.Unspecified
-                },
-                modifier = Modifier
-                    .padding(top = 4.dp)
-                    .align(alignment = Alignment.Start)
-            )
-
-            Spacer(modifier = Modifier.height(200.dp))
-
-            Text(
-                text = "Contact Us/Tech Support",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            Text(
-                text = "codefornonprofits@gmail.com",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "Acknowledgements",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            Text(
-                text = "This App Is Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = {
-                    auth.signOut()
-                    navController.navigate("login") {
-                        popUpTo("settings") { inclusive = true }
-                    }
-                },
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = colourError,
-                    contentColor = colourBackground
-                ),
-                modifier = Modifier
-                    .padding(14.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(30),
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
             ) {
-                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
-                Text("Logout")
+                var name by remember { mutableStateOf("") }
+                var saveStatus by remember { mutableStateOf("Saved") }
+
+                LaunchedEffect(Unit) {
+                    val uid = auth.currentUser?.uid
+                    if (uid != null) {
+                        val snapshot = db.collection("users").document(uid).get().await()
+                        if (snapshot.exists()) {
+                            name = snapshot.getString("name") ?: ""
+                        }
+                    }
+                }
+
+                LaunchedEffect(name) {
+                    saveStatus = "Not Saved"
+                    delay(1000)
+                    val uid = auth.currentUser?.uid
+                    if (uid != null) {
+                        db.collection("users").document(uid)
+                            .update("name", name)
+                            .addOnSuccessListener { saveStatus = "Saved" }
+                            .addOnFailureListener { saveStatus = "Save Failed" }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                Text(
+                    text = "Settings",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 40.sp,
+                    modifier = Modifier
+                        .padding(bottom = 24.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 14.sp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = colourSecondary,
+                        unfocusedContainerColor = colourSecondary,
+                        focusedTextColor = colourSecondaryText,
+                        unfocusedTextColor = colourSecondaryText,
+                        focusedBorderColor = colourSecondaryText,
+                        unfocusedBorderColor = colourSecondaryText,
+                        focusedLabelColor = colourSecondaryText,
+                        unfocusedLabelColor = colourSecondaryText,
+                        cursorColor = colourSecondaryText,
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    text = saveStatus,
+                    fontSize = 12.sp,
+                    color = when (saveStatus) {
+                        "Saved" -> colourButton
+                        "Not Saved" -> colourSecondaryText
+                        "Save Failed" -> Color.Red
+                        else -> Color.Unspecified
+                    },
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .align(alignment = Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(150.dp))
+
+                Text(
+                    text = "Contact Us/Tech Support",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "codefornonprofits@gmail.com",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Acknowledgements",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "This App Is Made By CFNP(Code For Non Profits) In Partnership With SST Scouts",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Button(
+                    onClick = {
+                        val email = auth.currentUser?.email
+                        if (email != null) {
+                            auth.sendPasswordResetEmail(email)
+                                .addOnSuccessListener {
+                                    popupMessage = "Password reset link sent to $email"
+                                    Log.d("PasswordReset", "Password reset email sent to $email")
+                                }
+                                .addOnFailureListener {
+                                    popupMessage = "Failed to send reset email"
+                                }
+                        } else {
+                            popupMessage = "No email found for this account"
+                        }
+                    },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = colourButton,
+                        contentColor = colourBackground
+                    ),
+                    modifier = Modifier
+                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(30),
+                ) {
+                    Icon(Icons.Default.LockReset, contentDescription = "Reset Password")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Reset Password")
+                }
+
+                Button(
+                    onClick = {
+                        auth.signOut()
+                        navController.navigate("login") {
+                            popUpTo("settings") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = colourError,
+                        contentColor = colourBackground
+                    ),
+                    modifier = Modifier
+                        .padding(14.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(30),
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                    Text("Logout")
+                }
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                PopupMessage(
+                    message = popupMessage,
+                    onDismiss = { popupMessage = "" },
+                )
             }
         }
     }
@@ -1467,6 +1526,74 @@ fun BottomNavBar(navController: NavController) {
                     indicatorColor = colourSecondary.copy(alpha = 0.3f)
                 )
             )
+        }
+    }
+}
+
+@Composable
+fun PopupMessage(
+    message: String,
+    onDismiss: () -> Unit,
+    backgroundColor: Color = colourButton,
+    textColor: Color = colourBackground,
+    durationMillis: Long = 3000L
+) {
+    var visible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(message) {
+        if (message.isNotEmpty()) {
+            visible = true
+            delay(durationMillis)
+            visible = false
+            delay(300)
+            onDismiss()
+        }
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = tween(durationMillis = 300)
+        ) + fadeIn(animationSpec = tween(durationMillis = 300)),
+        exit = slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(durationMillis = 300)
+        ) + fadeOut(animationSpec = tween(durationMillis = 300))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 32.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = backgroundColor,
+                shadowElevation = 8.dp,
+                modifier = Modifier.fillMaxWidth(0.9f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = "Info",
+                        tint = textColor,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = message,
+                        color = textColor,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { visible = false; onDismiss() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = textColor)
+                    }
+                }
+            }
         }
     }
 }

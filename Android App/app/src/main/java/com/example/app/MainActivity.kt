@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -112,11 +113,12 @@ fun LoginApp(navController: NavController) {
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
     var isLoading by remember { mutableStateOf(false) }
 
+    var popupMessage by remember { mutableStateOf<String?>(null) }
+    var showPopup by remember { mutableStateOf(false) }
+
     val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(username).matches()
-    val context = LocalContext.current
 
     val loginWithPassword = {
         isLoading = true
@@ -133,16 +135,17 @@ fun LoginApp(navController: NavController) {
                             } else if (doc.getBoolean("2faEnabled") == null) {
                                 userDocRef.update("2faEnabled", true)
                             }
-
                             navController.navigate("dashboard")
                             isLoading = false
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            popupMessage = "Error: ${e.message}"
+                            showPopup = true
                             isLoading = false
                         }
                 } else {
-                    Toast.makeText(context, task.exception?.message ?: "Login failed", Toast.LENGTH_SHORT).show()
+                    popupMessage = task.exception?.message ?: "Login failed"
+                    showPopup = true
                     isLoading = false
                 }
 
@@ -201,7 +204,14 @@ fun LoginApp(navController: NavController) {
                 textStyle = TextStyle(fontSize = 18.sp),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
-                    onDone = { if (isValidEmail && password.isNotEmpty()) loginWithPassword() }
+                    onDone = {
+                        if (isValidEmail && password.isNotEmpty()) {
+                            loginWithPassword()
+                        } else {
+                            popupMessage = "Invalid email or password"
+                            showPopup = true
+                        }
+                    }
                 ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = colourSecondary,
@@ -219,7 +229,14 @@ fun LoginApp(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
             FilledTonalButton(
                 shape = RoundedCornerShape(30),
-                onClick = { if (isValidEmail && password.isNotEmpty()) loginWithPassword() },
+                onClick = {
+                    if (isValidEmail && password.isNotEmpty()) {
+                        loginWithPassword()
+                    } else {
+                        popupMessage = "Invalid email or password"
+                        showPopup = true
+                    }
+                },
                 enabled = !isLoading,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = colourButton,
@@ -242,9 +259,25 @@ fun LoginApp(navController: NavController) {
                     .background(colourBackground.copy(alpha = 0.6f)),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.CircularProgressIndicator()
+                CircularProgressIndicator(color = colourButton)
+            }
+        }
+
+        if (showPopup && popupMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 64.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                PopupMessage(
+                    message = popupMessage!!,
+                    onDismiss = { showPopup = false }
+                )
             }
         }
     }
 }
+
+
 
