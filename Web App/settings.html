@@ -312,7 +312,8 @@
     import {
       getAuth,
       onAuthStateChanged,
-      signOut
+      signOut,
+      sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
       getFirestore,
@@ -340,7 +341,9 @@
       const nameInput = document.getElementById("displayNameInput");
       const saveNameBtn = document.getElementById("saveNameBtn");
       const logoutBtn = document.getElementById("logoutBtn");
+      const resetBtn = document.getElementById("resetPasswordBtn");
       const nameStatus = document.getElementById("nameStatus");
+      const resetStatus = document.getElementById("resetStatus");
       const content = document.querySelector(".content");
 
       content.style.visibility = "hidden";
@@ -415,6 +418,32 @@
           }
         } finally {
           saveNameBtn.disabled = false;
+        }
+      });
+
+      // Reset password logic
+      resetBtn.addEventListener("click", async () => {
+        const email = auth.currentUser?.email;
+        if (!email) {
+          resetStatus.textContent = "No email found for this account.";
+          resetStatus.classList.remove("status-success");
+          resetStatus.classList.add("status-error");
+          return;
+        }
+        resetBtn.disabled = true;
+        resetStatus.textContent = "Sending reset email...";
+        resetStatus.classList.remove("status-success", "status-error");
+
+        try {
+          await sendPasswordResetEmail(auth, email);
+          resetStatus.textContent = "Reset email sent!";
+          resetStatus.classList.add("status-success");
+        } catch (err) {
+          console.error("Reset error:", err);
+          resetStatus.textContent = "Failed to send reset email.";
+          resetStatus.classList.add("status-error");
+        } finally {
+          resetBtn.disabled = false;
         }
       });
 
@@ -517,6 +546,11 @@
           <div id="userEmail">Email: —</div>
         </div>
         <div id="nameStatus" class="small"></div>
+
+        <button id="resetPasswordBtn" class="save-name-btn" style="margin-top:10px; background-color:#006005;">
+          Reset Password
+        </button>
+        <div id="resetStatus" class="small"></div>
       </div>
     </div>
 
