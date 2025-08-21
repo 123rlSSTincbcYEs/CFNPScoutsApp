@@ -272,7 +272,8 @@ fun LoginApp(navController: NavController) {
             ) {
                 PopupMessage(
                     message = popupMessage!!,
-                    onDismiss = { showPopup = false }
+                    onDismiss = { showPopup = false },
+                    backgroundColor = colourError,
                 )
             }
         }
