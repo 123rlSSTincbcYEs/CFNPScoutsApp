@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -30,10 +31,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +58,9 @@ import com.google.firebase.auth.auth
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.google.firebase.firestore.DocumentReference
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -92,8 +98,14 @@ fun RootApp() {
         composable("login") {
             LoginApp(navController)
         }
+        composable("signup") {
+            SignUpScreen(navController)
+        }
         composable("viewItem") {
             ViewItemUi(navController)
+        }
+        composable("waiting") {
+            WaitingScreen(navController)
         }
         composable(
             "newItem/{edit}",
@@ -117,6 +129,7 @@ fun LoginApp(navController: NavController) {
 
     var popupMessage by remember { mutableStateOf<String?>(null) }
     var showPopup by remember { mutableStateOf(false) }
+    var popupColour by remember { mutableStateOf(colourError) }
 
     val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(username).matches()
 
@@ -125,28 +138,64 @@ fun LoginApp(navController: NavController) {
         auth.signInWithEmailAndPassword(username, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
-                    val userDocRef = db.collection("users").document(uid)
+                    val user = auth.currentUser
+                    if (user != null && user.isEmailVerified) {
+                        val uid = user.uid
+                        val userDocRef = db.collection("users").document(uid)
 
-                    userDocRef.get()
-                        .addOnSuccessListener { doc ->
-                            if (!doc.exists()) {
-                                userDocRef.set(mapOf("2faEnabled" to true))
-                            } else if (doc.getBoolean("2faEnabled") == null) {
-                                userDocRef.update("2faEnabled", true)
+                        userDocRef.get()
+                            .addOnSuccessListener { doc ->
+                                val userEmail = user.email ?: ""
+                                if (!doc.exists()) {
+                                    userDocRef.set(
+                                        mapOf(
+                                            "2faEnabled" to true,
+                                            "email" to userEmail,
+                                            "userType" to "unapproved"
+                                        )
+                                    ).addOnSuccessListener {
+                                        navController.navigate("waiting") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                        isLoading = false
+                                    }
+                                } else {
+                                    if (doc.getBoolean("2faEnabled") == null) {
+                                        userDocRef.update("2faEnabled", true)
+                                    }
+
+                                    val type = doc.getString("userType") ?: "unapproved"
+                                    if (type == "unapproved") {
+                                        navController.navigate("waiting") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                        isLoading = false
+                                    } else {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                        isLoading = false
+                                    }
+                                }
                             }
-                            navController.navigate("dashboard")
-                            isLoading = false
-                        }
-                        .addOnFailureListener { e ->
-                            popupMessage = "Error: ${e.message}"
-                            showPopup = true
-                            isLoading = false
-                        }
+                            .addOnFailureListener { e ->
+                                popupMessage = "Error: ${e.message}"
+                                showPopup = true
+                                isLoading = false
+                                popupColour = colourError
+                            }
+                    } else {
+                        popupMessage = "Please verify your email before logging in."
+                        showPopup = true
+                        auth.signOut()
+                        isLoading = false
+                        popupColour = colourError
+                    }
                 } else {
                     popupMessage = task.exception?.message ?: "Login failed"
                     showPopup = true
                     isLoading = false
+                    popupColour = colourError
                 }
 
                 username = ""
@@ -210,6 +259,7 @@ fun LoginApp(navController: NavController) {
                         } else {
                             popupMessage = "Invalid email or password"
                             showPopup = true
+                            popupColour = colourError
                         }
                     }
                 ),
@@ -235,6 +285,7 @@ fun LoginApp(navController: NavController) {
                     } else {
                         popupMessage = "Invalid email or password"
                         showPopup = true
+                        popupColour = colourError
                     }
                 },
                 enabled = !isLoading,
@@ -249,6 +300,9 @@ fun LoginApp(navController: NavController) {
                     .height(56.dp),
             ) {
                 Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            TextButton(onClick = { navController.navigate("signup") }) {
+                Text("Don't Have An Account? Sign Up", color = colourButton)
             }
         }
 
@@ -273,12 +327,177 @@ fun LoginApp(navController: NavController) {
                 PopupMessage(
                     message = popupMessage!!,
                     onDismiss = { showPopup = false },
-                    backgroundColor = colourError,
+                    backgroundColor = popupColour,
                 )
             }
         }
     }
 }
 
+@Composable
+fun SignUpScreen(navController: NavController) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var popupMessage by remember { mutableStateOf<String?>(null) }
+    var popupColour by remember { mutableStateOf(colourError) }
+    var showPopup by remember { mutableStateOf(false) }
+
+    val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
+    val scope = rememberCoroutineScope()
+
+    val signUp: () -> Unit = {
+        when {
+            !isValidEmail -> {}
+            else -> {
+                isLoading = true
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val user = auth.currentUser
+                            user?.sendEmailVerification()
+                                ?.addOnSuccessListener {
+                                    popupMessage =
+                                        "Account created! Please check your email to verify before logging in."
+                                    showPopup = true
+                                    popupColour = colourButton
+                                    auth.signOut()
+
+                                    scope.launch {
+                                        delay(2000)
+                                        navController.navigate("login") {
+                                            popUpTo("signup") { inclusive = true }
+                                        }
+                                    }
+                                }
+                        }
+                    }
+            }
+        }
+    }
 
 
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colourBackground),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(painter = painterResource(id = R.drawable.fearlessfalcons), contentDescription = "Logo")
+            Spacer(Modifier.height(10.dp))
+
+            Text("Sign Up", fontSize = 48.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val customTextFieldColors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = colourSecondary,
+                unfocusedContainerColor = colourSecondary,
+                focusedTextColor = colourSecondaryText,
+                unfocusedTextColor = colourSecondaryText,
+                focusedBorderColor = colourSecondaryText,
+                unfocusedBorderColor = colourSecondaryText,
+                cursorColor = colourButton,
+                selectionColors = TextSelectionColors(
+                    handleColor = colourButton,
+                    backgroundColor = colourButton.copy(alpha = 0.4f)
+                )
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                singleLine = true,
+                isError = email.isNotEmpty() && !isValidEmail,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .width(300.dp),
+                textStyle = TextStyle(fontSize = 18.sp),
+                colors = customTextFieldColors,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .width(300.dp),
+                textStyle = TextStyle(fontSize = 18.sp),
+                colors = customTextFieldColors,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .width(300.dp),
+                textStyle = TextStyle(fontSize = 18.sp),
+                colors = customTextFieldColors,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            FilledTonalButton(
+                shape = RoundedCornerShape(30),
+                onClick = { signUp() },
+                enabled = !isLoading,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colourButton,
+                    contentColor = colourBackground
+                ),
+                modifier = Modifier
+                    .padding(14.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .fillMaxWidth()
+                    .height(56.dp),
+            ) {
+                Text("Create Account", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(onClick = { navController.navigate("login") }) {
+                Text("Already have an account? Log in", color = colourButton)
+            }
+        }
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colourBackground.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = colourButton)
+            }
+        }
+
+        if (showPopup && popupMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 64.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                PopupMessage(
+                    message = popupMessage!!,
+                    onDismiss = { showPopup = false },
+                    backgroundColor = popupColour,
+                    textColor = colourBackground
+                )
+            }
+        }
+    }
+}
