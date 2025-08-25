@@ -57,7 +57,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun DashboardTApp(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
-    var filterOption by remember { mutableStateOf("Both") } // Filter: "Both", "Name", or "Tag"
+    var filterOption by remember { mutableStateOf("Both") }
     var items by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }

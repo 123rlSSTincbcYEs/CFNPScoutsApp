@@ -1485,52 +1485,6 @@ fun Settings(navController: NavController) {
 }
 
 @Composable
-fun BottomNavBar(navController: NavController) {
-    val currentDestination = navController
-        .currentBackStackEntryAsState().value?.destination
-
-    NavigationBar(
-        containerColor = colourBackground,
-        contentColor = colourSecondaryText
-    ) {
-        BottomNavItems.forEach { (label, icon, route) ->
-            val selected = currentDestination?.route == route
-
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(
-                        icon,
-                        contentDescription = label,
-                        tint = if (selected) colourButton else colourSecondaryText
-                    )
-                },
-                label = {
-                    Text(
-                        label,
-                        color = if (selected) colourButton else colourSecondaryText
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = colourButton,
-                    unselectedIconColor = colourSecondaryText,
-                    selectedTextColor = colourButton,
-                    unselectedTextColor = colourSecondaryText,
-                    indicatorColor = colourSecondary.copy(alpha = 0.3f)
-                )
-            )
-        }
-    }
-}
-
-@Composable
 fun PopupMessage(
     message: String,
     onDismiss: () -> Unit,

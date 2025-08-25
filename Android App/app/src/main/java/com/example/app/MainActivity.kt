@@ -107,6 +107,12 @@ fun RootApp() {
         composable("waiting") {
             WaitingScreen(navController)
         }
+        composable("management") {
+            ManagementScreen(navController)
+        }
+        composable("userManagement") {
+            UserManagementScreen(navController)
+        }
         composable(
             "newItem/{edit}",
                 arguments = listOf(
@@ -151,7 +157,8 @@ fun LoginApp(navController: NavController) {
                                         mapOf(
                                             "2faEnabled" to true,
                                             "email" to userEmail,
-                                            "userType" to "unapproved"
+                                            "userType" to "unapproved",
+                                            "name" to "New User"
                                         )
                                     ).addOnSuccessListener {
                                         navController.navigate("waiting") {
