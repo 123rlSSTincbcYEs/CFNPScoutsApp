@@ -419,6 +419,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var showTagDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     imageUrl = ""
+    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(edit) {
         if (edit == true && currentItem != null) {
@@ -653,21 +654,6 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
 }
 
 @Composable
-fun LoadingOverlay(isLoading: Boolean) {
-    if (isLoading) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .zIndex(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = Color.White, strokeWidth = 4.dp)
-        }
-    }
-}
-
-@Composable
 fun Edit_Status(normal: Int, onNormalChange: (Int) -> Unit, damaged: Int, onDamagedChange: (Int) -> Unit, missing: Int, onMissingChange: (Int) -> Unit, opEn: Boolean) {
     val total = normal + damaged + missing
 
@@ -778,8 +764,7 @@ fun ViewItemUi(navController: NavController) {
     var quantity by remember { mutableIntStateOf(0) }
     var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
     var tags by remember { mutableStateOf<List<String>>(emptyList()) }
-
-    val context = LocalContext.current
+    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(Unit) {
         currentItem?.let {
@@ -1008,6 +993,7 @@ fun NotesListScreen(navController: NavController) {
     var showRenameDialog by remember { mutableStateOf<String?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
+    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(uid) {
         if (uid != null) {
@@ -1219,6 +1205,7 @@ fun NoteEditorScreen(navController: NavController) {
     var content by remember { mutableStateOf("") }
     var saveStatus by remember { mutableStateOf("Saved") }
     var isInitialized by remember { mutableStateOf(false) }
+    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(noteId) {
         if (uid != null && noteId != null) {
@@ -1299,6 +1286,7 @@ fun NoteEditorScreen(navController: NavController) {
 @Composable
 fun Settings(navController: NavController) {
     var popupMessage by remember { mutableStateOf("") }
+    UserTypeWatcher(navController, false, false)
 
     Scaffold(
         bottomBar = { BottomNavBar(navController) },

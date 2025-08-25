@@ -145,7 +145,7 @@ fun LoginApp(navController: NavController) {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    if (user != null && user.isEmailVerified) {
+                    if (user != null) {
                         val uid = user.uid
                         val userDocRef = db.collection("users").document(uid)
 
@@ -192,7 +192,7 @@ fun LoginApp(navController: NavController) {
                                 popupColour = colourError
                             }
                     } else {
-                        popupMessage = "Please verify your email before logging in."
+                        popupMessage = "Login Failed"
                         showPopup = true
                         auth.signOut()
                         isLoading = false
@@ -352,39 +352,58 @@ fun SignUpScreen(navController: NavController) {
     var showPopup by remember { mutableStateOf(false) }
 
     val isValidEmail = Patterns.EMAIL_ADDRESS.matcher(email).matches()
-
     val scope = rememberCoroutineScope()
 
     val signUp: () -> Unit = {
         when {
-            !isValidEmail -> {}
+            !isValidEmail -> {
+                popupMessage = "Please enter a valid email."
+                showPopup = true
+                popupColour = colourError
+            }
+            password.isEmpty() || confirmPassword.isEmpty() -> {
+                popupMessage = "Password cannot be empty."
+                showPopup = true
+                popupColour = colourError
+            }
+            password != confirmPassword -> {
+                popupMessage = "Passwords do not match."
+                showPopup = true
+                popupColour = colourError
+            }
             else -> {
                 isLoading = true
                 auth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener { task ->
+                        isLoading = false
                         if (task.isSuccessful) {
-                            val user = auth.currentUser
-                            user?.sendEmailVerification()
-                                ?.addOnSuccessListener {
-                                    popupMessage =
-                                        "Account created! Please check your email to verify before logging in."
-                                    showPopup = true
-                                    popupColour = colourButton
-                                    auth.signOut()
+                            popupMessage = "Account created! You can now log in."
+                            showPopup = true
+                            popupColour = colourButton
+                            auth.signOut()
 
-                                    scope.launch {
-                                        delay(2000)
-                                        navController.navigate("login") {
-                                            popUpTo("signup") { inclusive = true }
-                                        }
-                                    }
+                            scope.launch {
+                                delay(2000)
+                                navController.navigate("waiting") {
+                                    popUpTo("login") { inclusive = true }
                                 }
+                            }
+                        } else {
+                            val exception = task.exception
+                            popupMessage = when {
+                                exception?.message?.contains("email address is already in use") == true ->
+                                    "An account with this email already exists."
+                                exception?.message?.contains("weak-password") == true ->
+                                    "Password is too weak. Please choose a stronger one."
+                                else -> exception?.message ?: "Sign up failed."
+                            }
+                            showPopup = true
+                            popupColour = colourError
                         }
                     }
             }
         }
     }
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(

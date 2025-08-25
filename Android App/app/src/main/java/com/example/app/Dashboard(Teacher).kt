@@ -66,6 +66,8 @@ fun DashboardTApp(navController: NavController) {
 
     val filterOptions = listOf("Both", "Name", "Tag")
 
+    UserTypeWatcher(navController, false, false)
+
     LaunchedEffect(Unit) {
         getItemsFromFirestore(
             collectionName = "items",

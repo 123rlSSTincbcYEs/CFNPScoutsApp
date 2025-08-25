@@ -40,6 +40,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -49,6 +50,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +77,7 @@ fun WaitingScreen(navController: NavController) {
             .background(colourBackground),
         contentAlignment = Alignment.Center
     ) {
+        UserTypeWatcher(navController, false, true)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -195,6 +198,7 @@ fun ManagementScreen(navController: NavController) {
         containerColor = colourBackground,
         bottomBar = { BottomNavBar(navController) }
     ) { innerPadding ->
+        UserTypeWatcher(navController, true, false)
         Button(
             onClick = {
                 navController.navigate("userManagement")
@@ -235,6 +239,8 @@ fun UserManagementScreen(navController: NavController) {
     var dropdownExpanded by remember { mutableStateOf(false) }
     var refresh by remember { mutableStateOf(false) }
     val filterOptions = listOf("Both", "Name", "Email")
+
+    UserTypeWatcher(navController, true, false)
 
     LaunchedEffect(Unit) {
         getUsersFromFirestore(
@@ -402,7 +408,16 @@ fun UserManagementScreen(navController: NavController) {
                                         id = id,
                                         navController = navController,
                                         fullUser = user,
-                                        onChangeRole = { userId, fullUser ->
+                                        onChangeRole = { userId, type ->
+                                            db.collection("users").document(userId)
+                                                .update("userType", type)
+                                                .addOnSuccessListener {
+                                                    Log.d("UserManagement", "User role updated successfully")
+                                                    refresh = true
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.e("UserManagement", "Error updating user role", e)
+                                                }
                                         },
                                         onRemoveUser = { userId ->
                                             db.collection("users").document(userId)
@@ -410,11 +425,24 @@ fun UserManagementScreen(navController: NavController) {
                                                 .addOnSuccessListener {
                                                     users = users.filterNot { it["id"] == userId }
                                                     Log.d("UserManagement", "User $userId deleted successfully")
+                                                    refresh = true
                                                 }
                                                 .addOnFailureListener { e ->
                                                     Log.e("UserManagement", "Error deleting user", e)
                                                     errorMessage = "Error deleting user: ${e.message}"
                                                 }
+                                        },
+                                        onResetUser = { userId ->
+                                            val email = auth.currentUser?.email
+                                            if (email != null) {
+                                                auth.sendPasswordResetEmail(email)
+                                                    .addOnSuccessListener {
+                                                        Log.d("PasswordReset", "Password reset email sent to $email")
+                                                    }
+                                                    .addOnFailureListener {
+                                                    }
+                                            } else {
+                                                Log.d("PasswordReset", "No user logged in")                                            }
                                         }
                                     )
                                 }
@@ -467,11 +495,14 @@ fun UserCardUI(
     id: String,
     navController: NavController,
     fullUser: Map<String, Any>,
-    onChangeRole: (String, Map<String, Any>) -> Unit,
-    onRemoveUser: (String) -> Unit
+    onChangeRole: (String, String) -> Unit,
+    onRemoveUser: (String) -> Unit,
+    onResetUser: (String) -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showTypeDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember {mutableStateOf(false) }
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -481,13 +512,86 @@ fun UserCardUI(
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
-                    onRemoveUser(id) // trigger actual delete
+                    onRemoveUser(id)
                 }) {
                     Text("Delete", color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showTypeDialog) {
+        AlertDialog(
+            onDismissRequest = { showTypeDialog = false },
+            title = { Text("Change User Type", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Select a new role for $name:")
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(
+                            onClick = {
+                                onChangeRole(id, "unapproved")
+                                showTypeDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Unapproved", color = colourSecondaryText)
+                        }
+                        TextButton(
+                            onClick = {
+                                onChangeRole(id, "normal")
+                                showTypeDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Normal", color = colourSecondaryText)
+                        }
+                        TextButton(
+                            onClick = {
+                                onChangeRole(id, "admin")
+                                showTypeDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Admin", color = colourSecondaryText)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTypeDialog = false }) {
+                    Text("Done", color = colourSecondaryText)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTypeDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Confirm Reset") },
+            text = { Text("Are you sure you want to reset the password for $name?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showResetDialog = false
+                    onResetUser(id)
+                }) {
+                    Text("Reset", color = colourSecondaryText)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -505,6 +609,7 @@ fun UserCardUI(
             Text(name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
             Text(email, fontSize = 14.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.height(2.dp))
             Text("Role: $userType", fontSize = 14.sp, color = Color.DarkGray)
 
             Row(
@@ -527,10 +632,20 @@ fun UserCardUI(
                             text = { Text("Change Role") },
                             onClick = {
                                 menuExpanded = false
-                                onChangeRole(id, fullUser)
+                                showTypeDialog = true
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.Upgrade, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Reset Password") },
+                            onClick = {
+                                menuExpanded = false
+                                showResetDialog = true
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.LockReset, contentDescription = null)
                             }
                         )
                         DropdownMenuItem(
@@ -545,6 +660,43 @@ fun UserCardUI(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun UserTypeWatcher(navController: NavController, adminScreen: Boolean, waiting: Boolean) {
+    val user = auth.currentUser
+
+    DisposableEffect(user?.uid) {
+        if (user == null) {
+            onDispose { }
+        } else {
+            val userDocRef = db.collection("users").document(user.uid)
+            val listener = userDocRef.addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+
+                val userType = snapshot.getString("userType")
+                Log.d("UserTypeWatcher", "User type: $userType")
+                if (userType == "unapproved" && !waiting) {
+                    navController.navigate("waiting") {
+                        popUpTo(0)
+                    }
+                } else if (userType != "admin" && adminScreen) {
+                    navController.navigate("dashboard") {
+                        popUpTo(0)
+                    }
+                } else if (waiting && userType != "unapproved") {
+                    navController.navigate("dashboard") {
+                        popUpTo(0)
+                    }
+                }
+            }
+
+            onDispose {
+                listener.remove()
             }
         }
     }
