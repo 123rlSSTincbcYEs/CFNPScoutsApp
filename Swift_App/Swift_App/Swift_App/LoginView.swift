@@ -56,8 +56,8 @@ struct LoginView: View {
                     }
                     .padding(.horizontal, 40)
                     
-                    NavigationLink(destination: DashboardView(), isActive: $isLoggedIn) {
-                        EmptyView()
+                    NavigationLink(isPresented: $isLoggedIn) {
+                        MenuView()
                     }
                     .navigationBarBackButtonHidden(true)
                     Spacer()
