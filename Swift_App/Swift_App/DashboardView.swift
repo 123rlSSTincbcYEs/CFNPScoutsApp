@@ -91,9 +91,9 @@ struct DashboardView: View {
                     .cornerRadius(20)
                     .padding(.horizontal, 20)
 
-                } // VStack
+                }
 
-                // Programmatic navigation to AddNewItem
+                
                 NavigationLink(
                     destination: AddItemView(onComplete: {
                         showAddItem = false
@@ -104,7 +104,7 @@ struct DashboardView: View {
                         EmptyView()
                     }
                 )
-            } // ZStack
+            }
             .navigationBarBackButtonHidden(true)
             .onAppear(perform: fetchItems)
             .confirmationDialog(
@@ -119,11 +119,9 @@ struct DashboardView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             }
-        } // NavigationView
+        }
         .navigationBarBackButtonHidden(true)
     }
-
-    // Firestore fetch
     func fetchItems() {
         let db = Database.database().reference().child("items")
         db.observe(.value) { snapshot in
