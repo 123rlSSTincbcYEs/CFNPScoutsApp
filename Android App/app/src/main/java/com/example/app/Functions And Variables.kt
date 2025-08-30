@@ -7,9 +7,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.getValue
@@ -57,8 +55,7 @@ data class QuantityStatus(
 data class BottomNavItem(
     val label: String,
     val icon: ImageVector,
-    val route: String,
-    val adminRq: Boolean
+    val route:String,
 )
 
 data class Note(
@@ -70,26 +67,17 @@ val BottomNavItems = listOf(
     BottomNavItem(
         label = "Home",
         icon = Icons.Filled.Home,
-        route = "dashboard",
-        adminRq = false
+        route = "dashboard"
     ),
     BottomNavItem(
         label = "Notes",
         icon = Icons.Filled.Notes,
-        route = "notes",
-        adminRq = false
-    ),
-    BottomNavItem(
-        label = "Manage",
-        icon = Icons.Filled.Build,
-        route = "management",
-        adminRq = true
+        route = "notes"
     ),
     BottomNavItem(
         label = "Settings",
         icon = Icons.Filled.Settings,
-        route = "settings",
-        adminRq = false
+        route = "settings"
     )
 )
 
@@ -106,25 +94,6 @@ fun getItemsFromFirestore(
                 data + ("id" to document.id)
             }
             onSuccess(itemsList)
-        }
-        .addOnFailureListener { exception ->
-            onFailure(exception)
-        }
-}
-
-fun getUsersFromFirestore(
-    collectionName: String,
-    onSuccess: (List<Map<String, Any>>) -> Unit,
-    onFailure: (Exception) -> Unit
-) {
-    db.collection("users")
-        .get()
-        .addOnSuccessListener { result ->
-            val userList = result.documents.mapNotNull { document ->
-                val data = document.data ?: emptyMap()
-                data + ("id" to document.id)
-            }
-            onSuccess(userList)
         }
         .addOnFailureListener { exception ->
             onFailure(exception)

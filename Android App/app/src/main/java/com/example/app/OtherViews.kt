@@ -419,7 +419,6 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
     var showTagDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     imageUrl = ""
-    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(edit) {
         if (edit == true && currentItem != null) {
@@ -654,6 +653,21 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
 }
 
 @Composable
+fun LoadingOverlay(isLoading: Boolean) {
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .zIndex(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White, strokeWidth = 4.dp)
+        }
+    }
+}
+
+@Composable
 fun Edit_Status(normal: Int, onNormalChange: (Int) -> Unit, damaged: Int, onDamagedChange: (Int) -> Unit, missing: Int, onMissingChange: (Int) -> Unit, opEn: Boolean) {
     val total = normal + damaged + missing
 
@@ -764,7 +778,8 @@ fun ViewItemUi(navController: NavController) {
     var quantity by remember { mutableIntStateOf(0) }
     var bitmapImage by remember { mutableStateOf<Bitmap?>(null) }
     var tags by remember { mutableStateOf<List<String>>(emptyList()) }
-    UserTypeWatcher(navController, false, false)
+
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         currentItem?.let {
@@ -993,7 +1008,6 @@ fun NotesListScreen(navController: NavController) {
     var showRenameDialog by remember { mutableStateOf<String?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
-    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(uid) {
         if (uid != null) {
@@ -1205,7 +1219,6 @@ fun NoteEditorScreen(navController: NavController) {
     var content by remember { mutableStateOf("") }
     var saveStatus by remember { mutableStateOf("Saved") }
     var isInitialized by remember { mutableStateOf(false) }
-    UserTypeWatcher(navController, false, false)
 
     LaunchedEffect(noteId) {
         if (uid != null && noteId != null) {
@@ -1286,7 +1299,6 @@ fun NoteEditorScreen(navController: NavController) {
 @Composable
 fun Settings(navController: NavController) {
     var popupMessage by remember { mutableStateOf("") }
-    UserTypeWatcher(navController, false, false)
 
     Scaffold(
         bottomBar = { BottomNavBar(navController) },
@@ -1468,6 +1480,52 @@ fun Settings(navController: NavController) {
                     onDismiss = { popupMessage = "" },
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun BottomNavBar(navController: NavController) {
+    val currentDestination = navController
+        .currentBackStackEntryAsState().value?.destination
+
+    NavigationBar(
+        containerColor = colourBackground,
+        contentColor = colourSecondaryText
+    ) {
+        BottomNavItems.forEach { (label, icon, route) ->
+            val selected = currentDestination?.route == route
+
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                icon = {
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        tint = if (selected) colourButton else colourSecondaryText
+                    )
+                },
+                label = {
+                    Text(
+                        label,
+                        color = if (selected) colourButton else colourSecondaryText
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = colourButton,
+                    unselectedIconColor = colourSecondaryText,
+                    selectedTextColor = colourButton,
+                    unselectedTextColor = colourSecondaryText,
+                    indicatorColor = colourSecondary.copy(alpha = 0.3f)
+                )
+            )
         }
     }
 }
