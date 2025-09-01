@@ -21,10 +21,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Upgrade
@@ -38,6 +41,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -199,31 +203,65 @@ fun ManagementScreen(navController: NavController) {
         bottomBar = { BottomNavBar(navController) }
     ) { innerPadding ->
         UserTypeWatcher(navController, true, false)
-        Button(
-            onClick = {
-                navController.navigate("userManagement")
-            },
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = colourButton,
-                contentColor = colourBackground
-            ),
+        Column(
             modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 14.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(30),
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Text(text = "Management", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    navController.navigate("userManagement")
+                },
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colourButton,
+                    contentColor = colourBackground
+                ),
+                modifier = Modifier
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(30),
             ) {
-                Icon(
-                    imageVector = Icons.Default.ManageAccounts,
-                    contentDescription = "Manage Users"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Manage Users")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AdminPanelSettings,
+                        contentDescription = "Manage Users"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Manage Users")
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    navController.navigate("dashboardT")
+                },
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colourButton,
+                    contentColor = colourBackground
+                ),
+                modifier = Modifier
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(30),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ManageSearch,
+                        contentDescription = "Manage Items"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Manage Items")
+                }
             }
         }
     }
@@ -539,7 +577,7 @@ fun UserCardUI(
                                 onChangeRole(id, "unapproved")
                                 showTypeDialog = false
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text("Unapproved", color = colourSecondaryText)
                         }
@@ -565,15 +603,13 @@ fun UserCardUI(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showTypeDialog = false }) {
-                    Text("Done", color = colourSecondaryText)
-                }
             },
             dismissButton = {
                 TextButton(onClick = { showTypeDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = colourSecondaryText)
                 }
-            }
+            },
+            containerColor = colourBackground
         )
     }
 
@@ -648,6 +684,7 @@ fun UserCardUI(
                                 Icon(Icons.Default.LockReset, contentDescription = null)
                             }
                         )
+                        HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Remove User", color = Color.Red) },
                             onClick = {
@@ -685,11 +722,11 @@ fun UserTypeWatcher(navController: NavController, adminScreen: Boolean, waiting:
                         popUpTo(0)
                     }
                 } else if (userType != "admin" && adminScreen) {
-                    navController.navigate("dashboard") {
+                    navController.navigate("dashboardN") {
                         popUpTo(0)
                     }
                 } else if (waiting && userType != "unapproved") {
-                    navController.navigate("dashboard") {
+                    navController.navigate("dashboardN") {
                         popUpTo(0)
                     }
                 }

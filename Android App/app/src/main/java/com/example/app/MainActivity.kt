@@ -81,12 +81,15 @@ lateinit var auth: FirebaseAuth
 fun RootApp() {
     val currentUser = Firebase.auth.currentUser
     val startDestination = remember(currentUser) {
-        if (currentUser != null) "dashboard" else "login"
+        if (currentUser != null) "dashboardN" else "login"
     }
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = startDestination) {
-        composable("dashboard") {
+        composable("dashboardT") {
             DashboardTApp(navController)
+        }
+        composable("dashboardN") {
+            DashboardNApp(navController)
         }
         composable("notes") { NotesListScreen(navController) }
         composable("noteEditor") { backStackEntry ->
@@ -178,7 +181,7 @@ fun LoginApp(navController: NavController) {
                                         }
                                         isLoading = false
                                     } else {
-                                        navController.navigate("dashboard") {
+                                        navController.navigate("dashboardN") {
                                             popUpTo("login") { inclusive = true }
                                         }
                                         isLoading = false

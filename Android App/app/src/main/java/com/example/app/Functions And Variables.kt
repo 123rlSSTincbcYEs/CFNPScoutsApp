@@ -70,7 +70,7 @@ val BottomNavItems = listOf(
     BottomNavItem(
         label = "Home",
         icon = Icons.Filled.Home,
-        route = "dashboard",
+        route = "dashboardN",
         adminRq = false
     ),
     BottomNavItem(

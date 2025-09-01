@@ -148,6 +148,7 @@ fun ItemUI(
     imageBase64: String?,
     fullItem: Map<String, Any>?,
     tags: List<String>?,
+    admin: Boolean,
     navController: NavController
 ) {
     var colourScheme by remember { mutableStateOf(Color(0xFF306bb1)) }
@@ -272,17 +273,19 @@ fun ItemUI(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("Edit") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                },
-                                onClick = {
-                                    expanded = false
-                                    currentItem = fullItem
-                                    navController.navigate("newItem/true")
-                                }
-                            )
+                            if (admin) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                    },
+                                    onClick = {
+                                        expanded = false
+                                        currentItem = fullItem
+                                        navController.navigate("newItem/true")
+                                    }
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text("View Details") },
                                 leadingIcon = {
@@ -294,34 +297,36 @@ fun ItemUI(
                                     navController.navigate("viewItem")
                                 }
                             )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("Delete") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                },
-                                onClick = {
-                                    expanded = false
-                                    db.collection("items").document(id.toString())
-                                        .delete()
-                                        .addOnSuccessListener {
-                                            triggerSheetSync(scriptUrl)
-                                            refresh = true
-                                            Toast.makeText(
-                                                context,
-                                                "Delete successful",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                        .addOnFailureListener {
-                                            Toast.makeText(
-                                                context,
-                                                "Delete failed: ${it.localizedMessage}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                }
-                            )
+                            if (admin) {
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text("Delete") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                    },
+                                    onClick = {
+                                        expanded = false
+                                        db.collection("items").document(id.toString())
+                                            .delete()
+                                            .addOnSuccessListener {
+                                                triggerSheetSync(scriptUrl)
+                                                refresh = true
+                                                Toast.makeText(
+                                                    context,
+                                                    "Delete successful",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                            .addOnFailureListener {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Delete failed: ${it.localizedMessage}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -567,7 +572,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                 ) {
                     FilledTonalButton(
                         onClick = {
-                            navController.navigate("dashboard")
+                            navController.navigate("dashboardT")
                             imageUrl = null
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFaf2522)),
@@ -607,7 +612,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                                 .set(item)
                                                 .addOnSuccessListener {
                                                     triggerSheetSync(scriptUrl)
-                                                    navController.navigate("dashboard")
+                                                    navController.navigate("dashboardT")
                                                 }
                                                 .addOnFailureListener { e ->
                                                     Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
@@ -618,7 +623,7 @@ fun NewItemUi(navController: NavController, edit: Boolean? = false) {
                                             .add(item)
                                             .addOnSuccessListener {
                                                 triggerSheetSync(scriptUrl)
-                                                navController.navigate("dashboard")
+                                                navController.navigate("dashboardT")
                                             }
                                             .addOnFailureListener { e ->
                                                 Toast.makeText(context, "Failed to create item: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
