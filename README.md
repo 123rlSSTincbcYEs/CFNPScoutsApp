@@ -6,5 +6,6 @@ This app is designed to supplement the Scouts' Logistics IC and helps keep track
 
 * Adding items
 * Displaying quantity of items, alongside an image
-* Connects to google sheets
 * More to come... (hopefully)
+
+** Web Version Can Be Found At -> https://sstscoutslos.vercel.app/login.html
